@@ -1,0 +1,84 @@
+# Marcos y mapeo control → requisito (entidades marco y control_marco del modelo de datos).
+# CIS GCP es el único marco codificado en el MVP. Los demás quedan como mapeo documental
+# hasta que el socio formador confirme cuáles son obligatorios (pregunta abierta P-02).
+
+marcos:
+  - marco_id: CIS_GCP
+    nombre: CIS Google Cloud Platform Foundation Benchmark
+    version: "5.0.0"
+    tipo: obligatorio
+    url_referencia: https://www.cisecurity.org/benchmark/google_cloud_computing_platform
+
+  - marco_id: CNBV
+    nombre: Disposiciones de la Comisión Nacional Bancaria y de Valores
+    version: null
+    tipo: documental # por confirmar en P-02
+    url_referencia: null
+
+  - marco_id: LFPDPPP
+    nombre: Ley Federal de Protección de Datos Personales en Posesión de los Particulares
+    version: null
+    tipo: documental # por confirmar en P-02
+    url_referencia: null
+
+  - marco_id: PCI_DSS
+    nombre: Payment Card Industry Data Security Standard
+    version: null
+    tipo: documental # por confirmar en P-02
+    url_referencia: null
+
+  - marco_id: ISO_27001
+    nombre: ISO/IEC 27001
+    version: null
+    tipo: documental # por confirmar en P-02
+    url_referencia: null
+
+  - marco_id: NIST
+    nombre: NIST Cybersecurity Framework
+    version: null
+    tipo: documental # por confirmar en P-02
+    url_referencia: null
+
+# Un control puede cumplir requisitos de varios marcos (relación N:M).
+# Los controles propios (CTL-RED-04, CTL-RED-06, CTL-ETQ-01, CTL-GOB-01) se mapean
+# con Cumplimiento en HU-02, cuando se conozca la respuesta a P-02.
+mapeos:
+  - control_id: CTL-RED-01
+    marco_id: CIS_GCP
+    requisito: "3.6"
+    nota: Verificado contra la v5.0.0
+
+  - control_id: CTL-RED-02
+    marco_id: CIS_GCP
+    requisito: "3.7"
+    nota: Verificado contra la v5.0.0
+
+  - control_id: CTL-RED-03
+    marco_id: CIS_GCP
+    requisito: "3.1"
+    nota: Verificado contra la v5.0.0
+
+  - control_id: CTL-RED-05
+    marco_id: CIS_GCP
+    requisito: "3.10"
+    nota: Verificado contra la v5.0.0
+
+  - control_id: CTL-IAM-01
+    marco_id: CIS_GCP
+    requisito: "1.4"
+    nota: Por confirmar contra la v5.0.0 (HU-02)
+
+  - control_id: CTL-IAM-02
+    marco_id: CIS_GCP
+    requisito: "1.5"
+    nota: Por confirmar contra la v5.0.0 (HU-02)
+
+  - control_id: CTL-LOG-01
+    marco_id: CIS_GCP
+    requisito: "2.1"
+    nota: Por confirmar contra la v5.0.0 (HU-02)
+
+  - control_id: CTL-STO-01
+    marco_id: CIS_GCP
+    requisito: "5.1"
+    nota: Por confirmar contra la v5.0.0 (HU-02)
