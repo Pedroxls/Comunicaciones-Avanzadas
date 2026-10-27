@@ -1,0 +1,140 @@
+# Catálogo de controles del MVP (tabla 4.1 del documento de diseño).
+# Severidad: critica y alta bloquean el merge (deny); media y baja solo se reportan (warn).
+# ref_cis: numeración del CIS Google Cloud Platform Foundation Benchmark v5.0.0.
+# ref_cis_por_confirmar: true = número tomado de versiones anteriores; se confirma en HU-02.
+
+controles:
+  - control_id: CTL-RED-01
+    titulo: SSH (22/tcp) abierto a internet
+    dominio: red
+    severidad: alta
+    bloquea: true
+    tipo_recurso: google_compute_firewall
+    ref_cis: "3.6"
+    semana: 3
+
+  - control_id: CTL-RED-02
+    titulo: RDP (3389/tcp) abierto a internet
+    dominio: red
+    severidad: alta
+    bloquea: true
+    tipo_recurso: google_compute_firewall
+    ref_cis: "3.7"
+    semana: 3
+
+  - control_id: CTL-RED-04
+    titulo: Telnet (23/tcp) abierto a internet
+    dominio: red
+    severidad: alta
+    bloquea: true
+    tipo_recurso: google_compute_firewall
+    ref_cis: null
+    semana: 3
+
+  - control_id: CTL-RED-03
+    titulo: Existe la red default en el proyecto
+    dominio: red
+    severidad: media
+    bloquea: false
+    tipo_recurso: google_compute_network
+    ref_cis: "3.1"
+    semana: 4
+
+  - control_id: CTL-RED-05
+    titulo: Subred sin VPC Flow Logs
+    dominio: red
+    severidad: media
+    bloquea: false
+    tipo_recurso: google_compute_subnetwork
+    ref_cis: "3.10"
+    semana: 4
+
+  - control_id: CTL-RED-06
+    titulo: Regla de entrada desde 0.0.0.0/0 a todos los puertos
+    dominio: red
+    severidad: critica
+    bloquea: true
+    tipo_recurso: google_compute_firewall
+    ref_cis: null
+    semana: 4
+
+  - control_id: CTL-IAM-01
+    titulo: Llave de cuenta de servicio administrada por el usuario
+    dominio: iam
+    severidad: alta
+    bloquea: true
+    tipo_recurso: google_service_account_key
+    ref_cis: "1.4"
+    ref_cis_por_confirmar: true
+    semana: 4
+
+  - control_id: CTL-IAM-02
+    titulo: Cuenta de servicio con rol Owner, Editor o de administrador
+    dominio: iam
+    severidad: alta
+    bloquea: true
+    tipo_recurso: google_project_iam_member
+    ref_cis: "1.5"
+    ref_cis_por_confirmar: true
+    semana: 4
+
+  - control_id: CTL-LOG-01
+    titulo: Registros de auditoría de acceso a datos sin configurar
+    dominio: registro
+    severidad: media
+    bloquea: false
+    tipo_recurso: google_project_iam_audit_config
+    ref_cis: "2.1"
+    ref_cis_por_confirmar: true
+    semana: 4
+
+  - control_id: CTL-STO-01
+    titulo: Bucket con acceso público
+    dominio: almacenamiento
+    severidad: critica
+    bloquea: true
+    tipo_recurso: google_storage_bucket_iam_member
+    ref_cis: "5.1"
+    ref_cis_por_confirmar: true
+    semana: 4
+
+  - control_id: CTL-ETQ-01
+    titulo: Recurso sin etiquetas de dueño y ambiente
+    dominio: gobierno
+    severidad: baja
+    bloquea: false
+    tipo_recurso: "*"
+    ref_cis: null
+    semana: 4
+
+  - control_id: CTL-GOB-01
+    titulo: Recurso creado o cambiado fuera de Terraform
+    dominio: gobierno
+    severidad: alta
+    bloquea: false # no hay PR que bloquear: genera una alerta de severidad alta (drift, HU-04)
+    tipo_recurso: "*"
+    ref_cis: null
+    semana: 4
+
+# Políticas implementadas (entidad politica del modelo de datos).
+politicas:
+  - politica_id: red.ssh_abierto
+    control_id: CTL-RED-01
+    archivo: policies/rego/red/ssh_abierto.rego
+    prueba: policies/tests/red_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: red.rdp_abierto
+    control_id: CTL-RED-02
+    archivo: policies/rego/red/rdp_abierto.rego
+    prueba: policies/tests/red_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: red.telnet_abierto
+    control_id: CTL-RED-04
+    archivo: policies/rego/red/telnet_abierto.rego
+    prueba: policies/tests/red_test.rego
+    motor: conftest
+    version: v0.1.0

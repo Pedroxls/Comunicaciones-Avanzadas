@@ -1,0 +1,14 @@
+# Excepciones aprobadas (HU-11, Could). Cada una entra por PR y la aprueba Cumplimiento.
+# Al llegar a vence_en deja de aplicar y el control vuelve a evaluarse.
+#
+# Formato:
+#  - excepcion_id: EXC-001
+#    control_id: CTL-RED-01
+#    self_link: //compute.googleapis.com/projects/<proyecto>/global/firewalls/<nombre>
+#    justificacion: Motivo del riesgo aceptado
+#    medida_compensatoria: Qué reduce el riesgo mientras dura
+#    aprobador: Responsable de Cumplimiento
+#    vigente_desde: "2026-11-02"
+#    vence_en: "2026-11-30"
+
+excepciones: []

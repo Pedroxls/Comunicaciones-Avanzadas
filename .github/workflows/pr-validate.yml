@@ -1,0 +1,139 @@
+# Validación de cada Pull Request hacia main (HU-01).
+# Marca como obligatorios en la protección de main: estatico, politicas, secretos y cumplimiento.
+# GitHub solo carga workflows de la raíz. El código está en equipo3-cumplimiento-gcp/.
+name: pr-validate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: equipo3-cumplimiento-gcp
+
+env:
+  TF_VERSION: "1.9.8"
+  CONFTEST_VERSION: "0.55.0"
+
+jobs:
+  estatico:
+    name: estatico
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive infra
+
+      - name: terraform validate (cada carpeta con .tf)
+        run: |
+          for d in $(find infra -name '*.tf' -not -path '*/.terraform/*' -exec dirname {} \; | sort -u); do
+            echo "::group::$d"
+            terraform -chdir="$d" init -backend=false -input=false
+            terraform -chdir="$d" validate
+            echo "::endgroup::"
+          done
+
+      - uses: terraform-linters/setup-tflint@v4
+
+      - name: tflint
+        run: |
+          tflint --init
+          tflint --recursive --format compact
+
+      - name: Checkov (chequeos CIS sobre el código)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: equipo3-cumplimiento-gcp/infra
+          framework: terraform
+          quiet: true
+
+  politicas:
+    name: politicas
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: opa fmt (sin cambios pendientes)
+        run: opa fmt --fail --list policies
+
+      - name: opa test (un caso que pasa y uno que falla por política)
+        run: opa test policies -v
+
+  secretos:
+    name: secretos
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cumplimiento:
+    name: cumplimiento
+    needs: politicas
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation: sin llaves JSON
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Aviso mientras no exista la federación de identidad
+        if: ${{ vars.GCP_WIF_PROVIDER == '' }}
+        run: echo "::notice::Falta configurar GCP_WIF_PROVIDER, GCP_PLAN_SA y GCP_PROJECT_ID (HU-07). Se omite el plan contra GCP."
+
+      - uses: google-github-actions/auth@v2
+        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAN_SA }}
+
+      - uses: hashicorp/setup-terraform@v3
+        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Plan de dev en JSON
+        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
+        working-directory: equipo3-cumplimiento-gcp/infra/environments/dev
+        env:
+          TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          terraform init -input=false
+          terraform plan -input=false -lock=false -out=tfplan
+          terraform show -json tfplan > plan.json
+
+      - name: Instalar Conftest
+        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
+        run: |
+          curl -sSL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" | tar -xz conftest
+          sudo mv conftest /usr/local/bin/
+
+      - name: Conftest (deny bloquea el merge)
+        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
+        run: conftest test infra/environments/dev/plan.json --policy policies/rego --all-namespaces --output github

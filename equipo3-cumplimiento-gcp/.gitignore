@@ -1,0 +1,38 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Planes (pueden contener datos sensibles)
+tfplan
+*.tfplan
+plan.json
+
+# Credenciales: nunca en el repositorio
+*-key.json
+sa-*.json
+credentials*.json
+.env
+.env.*
+
+# Python (agente y servicios)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Editores y sistema
+.vscode/
+.idea/
+.DS_Store

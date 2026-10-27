@@ -1,0 +1,74 @@
+name: Historia de usuario
+description: Una historia del backlog con sus criterios de aceptación
+title: "HU-XX: "
+labels: ["historia"]
+body:
+  - type: input
+    id: id
+    attributes:
+      label: Id de la historia
+      placeholder: HU-01
+    validations:
+      required: true
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia
+      description: Como <rol>, quiero <capacidad>, para <beneficio>.
+      placeholder: Como ingeniero de plataforma, quiero que cada PR evalúe el plan de Terraform contra las políticas, para enterarme de las violaciones antes de desplegar.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Uno por línea, en formato Dado / Cuando / Entonces.
+      placeholder: |
+        Dado un PR que abre Telnet (23/tcp) a 0.0.0.0/0, cuando corre el pipeline, entonces el check falla y GitHub no deja hacer merge.
+    validations:
+      required: true
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad (MoSCoW)
+      options:
+        - Must
+        - Should
+        - Could
+        - Won't
+    validations:
+      required: true
+  - type: dropdown
+    id: puntos
+    attributes:
+      label: Puntos
+      options:
+        - "1"
+        - "2"
+        - "3"
+        - "5"
+        - "8"
+        - "13"
+    validations:
+      required: true
+  - type: dropdown
+    id: semana
+    attributes:
+      label: Semana
+      options:
+        - Semana 3
+        - Semana 4
+        - Semana 5
+        - Después del MVP
+    validations:
+      required: true
+  - type: input
+    id: requerimientos
+    attributes:
+      label: Requerimientos que cubre
+      placeholder: RF-01, RF-02, RNF-03
+  - type: input
+    id: dependencias
+    attributes:
+      label: Depende de
+      placeholder: HU-03
