@@ -5,10 +5,11 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from cumplimiento.api import Servicio
+from cumplimiento.explicar import modelo_desde_entorno
 
 
 def main() -> None:
-    servicio = Servicio()
+    servicio = Servicio(modelo=modelo_desde_entorno())
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):  # noqa: N802
