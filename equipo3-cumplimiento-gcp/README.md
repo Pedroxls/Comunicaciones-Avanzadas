@@ -56,8 +56,8 @@ Las políticas comparten `policies/rego/lib/`. El módulo `infra/modules/network
 
 | Integrante | Rol |
 |---|---|
-| Claudio Patricio Cantú Alanis | Líder de proyecto e Ingeniero IaC |
-| Pedro Alejandro Rodriguez Gonzalez | Arquitecto Cloud e Ingeniero de Redes |
+| Pedro Alejandro Rodriguez Gonzalez | Líder de proyecto, arquitecto cloud e ingeniero de redes |
+| Claudio Patricio Cantú Alanis | Ingeniero IaC |
 | Diego José Roca Rodríguez | Ingeniero de Seguridad |
 | Paulo de Jesús Ibarra Carballo | Scrum Master e Ingeniero del agente |
 

@@ -3,14 +3,14 @@
 # Las rutas salen de la raíz del repositorio.
 
 # Por defecto, cualquier cambio lo revisa el líder del proyecto
-*                     @USUARIO_GITHUB_CLAUDIO
+*                     @Pedroxls
 
 # Políticas y catálogo de controles: los aprueba Seguridad
 /equipo3-cumplimiento-gcp/policies/            @USUARIO_GITHUB_DIEGO
 /equipo3-cumplimiento-gcp/policies/catalog/    @USUARIO_GITHUB_DIEGO
 
 # Bootstrap de GCP (estado, identidad del pipeline, presupuesto): el líder
-/equipo3-cumplimiento-gcp/infra/bootstrap/     @USUARIO_GITHUB_CLAUDIO
+/equipo3-cumplimiento-gcp/infra/bootstrap/     @Pedroxls
 
 # Red y drift
 /equipo3-cumplimiento-gcp/infra/modules/network/  @Pedroxls
@@ -20,4 +20,4 @@
 /equipo3-cumplimiento-gcp/agent/               @USUARIO_GITHUB_PAULO
 
 # Pipeline
-/.github/workflows/   @USUARIO_GITHUB_CLAUDIO @USUARIO_GITHUB_PAULO
+/.github/workflows/   @Pedroxls @USUARIO_GITHUB_PAULO
