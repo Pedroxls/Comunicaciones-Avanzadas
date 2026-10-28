@@ -1,0 +1,10 @@
+{
+  "evento_id": "identificador para descartar duplicados",
+  "tipo": "gate.resultado | drift | presupuesto",
+  "ambiente": "dev | qa | prod",
+  "recurso": "direccion del recurso",
+  "actor": "quien hizo el cambio",
+  "veredicto": "aprobado | bloqueado | con_advertencias | alerta",
+  "control_id": "CTL-RED-04",
+  "severidad": "critica | alta | media | baja"
+}

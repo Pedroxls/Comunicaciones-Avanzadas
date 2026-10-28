@@ -48,9 +48,9 @@ terraform init && terraform plan -out tfplan && terraform show -json tfplan > pl
 conftest test plan.json --policy ../../../policies/rego --all-namespaces
 ```
 
-Checks obligatorios en cada PR (workflow `pr-validate`): `estatico` (fmt, validate, tflint, Checkov), `politicas` (opa test), `secretos` (gitleaks) y `cumplimiento` (plan de dev evaluado con Conftest). El plan contra GCP se activa al configurar las variables `GCP_WIF_PROVIDER`, `GCP_PLAN_SA` y `GCP_PROJECT_ID` del repositorio (HU-07).
+Checks obligatorios en cada PR (workflow `pr-validate`): `estatico` (fmt, validate, tflint, terraform test, Checkov), `politicas` (opa test y pytest), `secretos` (gitleaks) y `cumplimiento`. El cumplimiento siempre demuestra que un plan con Telnet a `0.0.0.0/0` produce `CTL-RED-04` y que la red base no tiene `deny`. El plan contra GCP se suma al configurar `GCP_WIF_PROVIDER`, `GCP_PLAN_SA` y `GCP_PROJECT_ID` (HU-07). `MODO_POLITICAS=advertencia` reporta las violaciones del plan real sin bloquear; en el curso el valor es `bloqueo`. Si no hay `AGENTE_URL`, el comentario del PR dice «explicación pendiente».
 
-Las políticas de SSH, RDP y Telnet comparten `policies/rego/lib/firewall.rego`. El módulo `infra/modules/network` deja en dev una VPC sin subredes automáticas, con flow logs, SSH solo desde IAP (`35.235.240.0/20`) y HTTPS solo dentro de la subred. Ese plan no dispara CTL-RED-01, CTL-RED-02 ni CTL-RED-04.
+Las políticas comparten `policies/rego/lib/`. El módulo `infra/modules/network` (v0.1.0) deja en dev una VPC sin subredes automáticas, con flow logs, SSH solo desde IAP (`35.235.240.0/20`), HTTPS solo dentro de la subred y una regla que niega el resto de la entrada. Ese plan no dispara los controles que bloquean.
 
 ## Equipo
 

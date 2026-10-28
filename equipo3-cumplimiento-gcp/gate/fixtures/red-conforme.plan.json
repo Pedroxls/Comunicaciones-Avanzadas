@@ -1,0 +1,73 @@
+{
+  "resource_changes": [
+    {
+      "address": "module.network.google_compute_network.vpc",
+      "type": "google_compute_network",
+      "change": {
+        "actions": ["create"],
+        "after": { "name": "dev-vpc", "auto_create_subnetworks": false }
+      }
+    },
+    {
+      "address": "module.network.google_compute_subnetwork.privada",
+      "type": "google_compute_subnetwork",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "name": "dev-privada",
+          "ip_cidr_range": "10.10.0.0/24",
+          "log_config": [
+            {
+              "aggregation_interval": "INTERVAL_5_MIN",
+              "flow_sampling": 0.5,
+              "metadata": "INCLUDE_ALL_METADATA"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "address": "module.network.google_compute_firewall.iap_ssh",
+      "type": "google_compute_firewall",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "name": "dev-iap-ssh",
+          "direction": "INGRESS",
+          "disabled": false,
+          "source_ranges": ["35.235.240.0/20"],
+          "allow": [{ "protocol": "tcp", "ports": ["22"] }]
+        }
+      }
+    },
+    {
+      "address": "module.network.google_compute_firewall.interna_https",
+      "type": "google_compute_firewall",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "name": "dev-interna-https",
+          "direction": "INGRESS",
+          "disabled": false,
+          "source_ranges": ["10.10.0.0/24"],
+          "allow": [{ "protocol": "tcp", "ports": ["443"] }]
+        }
+      }
+    },
+    {
+      "address": "module.network.google_compute_firewall.denegar_entrada",
+      "type": "google_compute_firewall",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "name": "dev-denegar-entrada",
+          "direction": "INGRESS",
+          "disabled": false,
+          "source_ranges": ["0.0.0.0/0"],
+          "priority": 65534,
+          "deny": [{ "protocol": "all" }]
+        }
+      }
+    }
+  ]
+}

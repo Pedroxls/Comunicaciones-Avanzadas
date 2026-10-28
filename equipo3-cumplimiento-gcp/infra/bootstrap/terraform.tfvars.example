@@ -1,0 +1,5 @@
+project_id         = "cambia-por-el-proyecto-dev"
+billing_account    = "000000-000000-000000"
+budget_amount_usd  = 50
+region             = "us-central1"
+github_repository  = "Pedroxls/Comunicaciones-Avanzadas"

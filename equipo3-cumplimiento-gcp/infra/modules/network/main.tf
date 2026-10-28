@@ -58,3 +58,22 @@ resource "google_compute_firewall" "interna_https" {
     metadata = "INCLUDE_ALL_METADATA"
   }
 }
+
+# Prioridad alta en número = se evalúa después de las reglas de permiso.
+# Lo que no coincidió con IAP o con la subred queda negado.
+resource "google_compute_firewall" "denegar_entrada" {
+  project       = var.project_id
+  name          = "${var.name}-denegar-entrada"
+  network       = google_compute_network.vpc.name
+  direction     = "INGRESS"
+  priority      = 65534
+  source_ranges = ["0.0.0.0/0"]
+
+  deny {
+    protocol = "all"
+  }
+
+  log_config {
+    metadata = "INCLUDE_ALL_METADATA"
+  }
+}

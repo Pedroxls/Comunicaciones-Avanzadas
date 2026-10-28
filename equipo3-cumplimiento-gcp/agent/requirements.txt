@@ -1,0 +1,3 @@
+# El runtime de pruebas no instala este paquete: sin Vertex se usa la plantilla.
+# La imagen de Cloud Run sí lo instala, y cumplimiento/adk_agent.py construye el agente.
+google-adk>=1.0.0

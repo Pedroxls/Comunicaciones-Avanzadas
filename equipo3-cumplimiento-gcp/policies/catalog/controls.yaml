@@ -99,7 +99,7 @@ controles:
     semana: 4
 
   - control_id: CTL-ETQ-01
-    titulo: Recurso sin etiquetas de dueño y ambiente
+    titulo: Recurso sin etiquetas de dueño, ambiente, clasificación, centro de costos y marco
     dominio: gobierno
     severidad: baja
     bloquea: false
@@ -112,6 +112,15 @@ controles:
     dominio: gobierno
     severidad: alta
     bloquea: false # no hay PR que bloquear: genera una alerta de severidad alta (drift, HU-04)
+    tipo_recurso: "*"
+    ref_cis: null
+    semana: 4
+
+  - control_id: CTL-GOB-02
+    titulo: Recurso fuera de un módulo aprobado
+    dominio: gobierno
+    severidad: media
+    bloquea: false
     tipo_recurso: "*"
     ref_cis: null
     semana: 4
@@ -137,4 +146,74 @@ politicas:
     archivo: policies/rego/red/telnet_abierto.rego
     prueba: policies/tests/red_test.rego
     motor: conftest
+    version: v0.1.0
+
+  - politica_id: red.red_default
+    control_id: CTL-RED-03
+    archivo: policies/rego/red/red_default.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: red.flow_logs
+    control_id: CTL-RED-05
+    archivo: policies/rego/red/flow_logs.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: red.todos_los_puertos
+    control_id: CTL-RED-06
+    archivo: policies/rego/red/todos_los_puertos.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: iam.llave_sa
+    control_id: CTL-IAM-01
+    archivo: policies/rego/iam/llave_sa.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: iam.rol_admin
+    control_id: CTL-IAM-02
+    archivo: policies/rego/iam/rol_admin.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: registro.audit_datos
+    control_id: CTL-LOG-01
+    archivo: policies/rego/registro/audit_datos.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: almacenamiento.bucket_publico
+    control_id: CTL-STO-01
+    archivo: policies/rego/almacenamiento/bucket_publico.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: gobierno.etiquetas
+    control_id: CTL-ETQ-01
+    archivo: policies/rego/gobierno/etiquetas.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: gobierno.modulo_aprobado
+    control_id: CTL-GOB-02
+    archivo: policies/rego/gobierno/modulo_aprobado.rego
+    prueba: policies/tests/catalogo_test.rego
+    motor: conftest
+    version: v0.1.0
+
+  - politica_id: sensor.drift
+    control_id: CTL-GOB-01
+    archivo: sensors/drift/drift/evaluar.py
+    prueba: sensors/drift/tests/test_hallazgo.py
+    motor: job
     version: v0.1.0
