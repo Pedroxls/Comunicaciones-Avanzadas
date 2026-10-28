@@ -52,6 +52,8 @@ Checks obligatorios en cada PR (workflow `pr-validate`): `estatico` (fmt, valida
 
 Las políticas comparten `policies/rego/lib/`. El módulo `infra/modules/network` (v0.1.0) deja en dev una VPC sin subredes automáticas, con flow logs, SSH solo desde IAP (`35.235.240.0/20`), HTTPS solo dentro de la subred y una regla que niega el resto de la entrada. Ese plan no dispara los controles que bloquean.
 
+Lo que hay que crear en consolas (proyecto, billing, Slack, Looker y las variables de GitHub) está en [docs/pendiente-fuera-del-codigo.pdf](docs/pendiente-fuera-del-codigo.pdf).
+
 ## Equipo
 
 | Integrante | Rol |

@@ -13,6 +13,12 @@ variable "budget_amount_usd" {
   type        = number
 }
 
+variable "budget_publisher" {
+  description = "Cuenta que publica las alertas de presupuesto. Si el apply la rechaza, sustituirla por la que indique el error."
+  type        = string
+  default     = "serviceAccount:billing-budget-alert@system.gserviceaccount.com"
+}
+
 variable "region" {
   description = "Región de los recursos regionales."
   type        = string

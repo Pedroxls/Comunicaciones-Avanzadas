@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from cumplimiento.adk_agent import construir  # noqa: E402
 from cumplimiento.api import Servicio  # noqa: E402
-from cumplimiento.explicar import Memoria, explicar  # noqa: E402
+from cumplimiento.explicar import Memoria, explicar, modelo_desde_entorno  # noqa: E402
 from cumplimiento.herramientas import INSTRUCCION, herramientas_de_lectura  # noqa: E402
 
 CASOS = Path(__file__).resolve().parents[1] / "evals" / "cases.json"
@@ -47,6 +47,16 @@ def test_sin_google_adk_el_constructor_lo_dice():
         pytest.skip("google-adk está instalado")
     with pytest.raises(ImportError):
         construir()
+
+
+def test_sin_vertex_el_modelo_no_se_construye(monkeypatch):
+    monkeypatch.delenv("USE_VERTEX", raising=False)
+    assert modelo_desde_entorno() is None
+    monkeypatch.setenv("USE_VERTEX", "1")
+    try:
+        importlib.import_module("google.adk")
+    except ImportError:
+        assert modelo_desde_entorno() is None
 
 
 def test_vertex_caido_no_cambia_el_bloqueo():

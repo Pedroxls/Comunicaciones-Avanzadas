@@ -72,12 +72,22 @@ resource "google_cloud_scheduler_job" "drift_horario" {
 
   http_target {
     http_method = "POST"
-    uri         = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/jobs/drift:run"
+    uri         = "https://run.googleapis.com/v2/projects/${var.project_id}/locations/${var.region}/jobs/drift:run"
 
     oauth_token {
       service_account_email = google_service_account.drift.email
     }
   }
+}
+
+resource "google_cloud_run_v2_job_iam_member" "drift_ejecuta" {
+  count = var.enable_cloud_run ? 1 : 0
+
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_job.drift[0].name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.drift.email}"
 }
 
 resource "google_logging_project_sink" "drift" {
@@ -89,4 +99,13 @@ resource "google_logging_project_sink" "drift" {
   filter      = "protoPayload.serviceName=\"compute.googleapis.com\" AND (protoPayload.methodName:\"compute.firewalls\" OR protoPayload.methodName:\"compute.networks\")"
 
   unique_writer_identity = true
+}
+
+resource "google_pubsub_topic_iam_member" "sink_publica" {
+  count = var.enable_drift_sink ? 1 : 0
+
+  project = var.project_id
+  topic   = google_pubsub_topic.eventos.name
+  role    = "roles/pubsub.publisher"
+  member  = google_logging_project_sink.drift[0].writer_identity
 }

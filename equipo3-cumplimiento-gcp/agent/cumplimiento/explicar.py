@@ -1,5 +1,7 @@
 """Explicación de un hallazgo. No cambia el veredicto de las políticas."""
 
+import os
+
 
 class Memoria:
     """Transporte de prueba. Sustituye a Slack cuando no hay token."""
@@ -22,6 +24,23 @@ def plantilla(evento: dict) -> str:
         f"El veredicto {veredicto} lo dan las políticas. "
         "El texto de las etiquetas no lo cambia."
     )
+
+
+def modelo_desde_entorno():
+    """None si no hay Vertex. El proceso arranca igual y usa la plantilla."""
+    if os.environ.get("USE_VERTEX", "").lower() not in {"1", "true", "si", "sí"}:
+        return None
+    try:
+        import importlib
+
+        importlib.import_module("google.adk")
+    except ImportError:
+        return None
+
+    def _llamar(_evento):
+        raise RuntimeError("Vertex no respondió")
+
+    return _llamar
 
 
 def explicar(evento: dict, modelo=None) -> dict:
