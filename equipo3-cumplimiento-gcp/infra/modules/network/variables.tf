@@ -22,3 +22,9 @@ variable "subnet_cidr" {
   description = "CIDR de la subred privada."
   type        = string
 }
+
+variable "manage_default_network" {
+  description = "Si es true, al aplicar borra la red default del proyecto y sus firewalls automáticos. Apagado por defecto: un plan normal no la toca."
+  type        = bool
+  default     = false
+}

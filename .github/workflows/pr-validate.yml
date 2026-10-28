@@ -54,6 +54,9 @@ jobs:
           tflint --init
           tflint --recursive --format compact
 
+      - name: terraform test (módulo de red)
+        run: terraform -chdir=infra/modules/network test
+
       - name: Checkov (chequeos CIS sobre el código)
         uses: bridgecrewio/checkov-action@v12
         with:
@@ -78,6 +81,15 @@ jobs:
       - name: opa test (un caso que pasa y uno que falla por política)
         run: opa test policies -v
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: pytest de evidencia, drift, agente y freno
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest services/evidence/tests sensors/drift/tests agent/tests infra/bootstrap/killswitch -q
+
   secretos:
     name: secretos
     runs-on: ubuntu-latest
@@ -99,12 +111,21 @@ jobs:
     permissions:
       contents: read
       id-token: write # Workload Identity Federation: sin llaves JSON
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Aviso mientras no exista la federación de identidad
         if: ${{ vars.GCP_WIF_PROVIDER == '' }}
-        run: echo "::notice::Falta configurar GCP_WIF_PROVIDER, GCP_PLAN_SA y GCP_PROJECT_ID (HU-07). Se omite el plan contra GCP."
+        run: echo "::notice::Falta configurar GCP_WIF_PROVIDER, GCP_PLAN_SA y GCP_PROJECT_ID (HU-07). El plan contra GCP se omite; el fixture de Telnet sí se evalúa."
+
+      - name: Instalar Conftest
+        run: |
+          curl -fsSL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" | tar -xz conftest
+          sudo mv conftest /usr/local/bin/
+
+      - name: El plan con Telnet abierto produce CTL-RED-04
+        run: sh gate/fixtures/comprobar_gate.sh
 
       - uses: google-github-actions/auth@v2
         if: ${{ vars.GCP_WIF_PROVIDER != '' }}
@@ -128,12 +149,41 @@ jobs:
           terraform plan -input=false -lock=false -out=tfplan
           terraform show -json tfplan > plan.json
 
-      - name: Instalar Conftest
+      - name: Infracost
         if: ${{ vars.GCP_WIF_PROVIDER != '' }}
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
         run: |
-          curl -sSL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" | tar -xz conftest
-          sudo mv conftest /usr/local/bin/
+          if [ -z "$INFRACOST_API_KEY" ]; then
+            echo "::notice::Falta INFRACOST_API_KEY. Se omite el costo del PR."
+            exit 0
+          fi
+          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+          infracost breakdown --path infra/environments/dev/plan.json --format table
 
-      - name: Conftest (deny bloquea el merge)
-        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
-        run: conftest test infra/environments/dev/plan.json --policy policies/rego --all-namespaces --output github
+      - name: Conftest del plan real
+        id: plan
+        env:
+          MODO_POLITICAS: ${{ vars.MODO_POLITICAS }}
+          AGENTE_URL: ${{ vars.AGENTE_URL }}
+        run: sh gate/evaluar_plan.sh
+        continue-on-error: true
+
+      - name: Comentario en el PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'equipo3-cumplimiento-gcp/veredicto.md';
+            const body = fs.readFileSync(path, 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: El modo bloqueo falla el check
+        if: steps.plan.outcome == 'failure'
+        run: exit 1

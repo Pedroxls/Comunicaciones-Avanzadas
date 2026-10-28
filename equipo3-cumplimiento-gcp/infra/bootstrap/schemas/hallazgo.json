@@ -1,0 +1,13 @@
+[
+  {"name": "hallazgo_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "evaluacion_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "control_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "marco_id", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "self_link", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "severidad", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "estado", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "actor", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "detectado_en", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "ambiente", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "evidencia_id", "type": "STRING", "mode": "NULLABLE"}
+]

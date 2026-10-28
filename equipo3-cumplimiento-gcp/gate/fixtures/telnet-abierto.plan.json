@@ -1,0 +1,18 @@
+{
+  "resource_changes": [
+    {
+      "address": "google_compute_firewall.telnet",
+      "type": "google_compute_firewall",
+      "change": {
+        "actions": ["create"],
+        "after": {
+          "name": "telnet",
+          "direction": "INGRESS",
+          "disabled": false,
+          "source_ranges": ["0.0.0.0/0"],
+          "allow": [{ "protocol": "tcp", "ports": ["23"] }]
+        }
+      }
+    }
+  ]
+}

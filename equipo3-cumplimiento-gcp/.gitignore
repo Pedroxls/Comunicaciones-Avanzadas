@@ -18,6 +18,7 @@ terraform.rc
 tfplan
 *.tfplan
 plan.json
+veredicto.md
 
 # Credenciales: nunca en el repositorio
 *-key.json
