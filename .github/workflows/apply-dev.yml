@@ -1,0 +1,97 @@
+# Aplica dev al fusionar a main (HU-01). Vuelve a evaluar el plan con las
+# mismas políticas y aplica ese mismo archivo; su sha256 queda en la evidencia.
+# Sin evaluación o sin evidencia no hay apply. Producción solo hace plan.
+name: apply-dev
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - equipo3-cumplimiento-gcp/infra/environments/dev/**
+      - equipo3-cumplimiento-gcp/infra/modules/**
+      - equipo3-cumplimiento-gcp/policies/**
+      - equipo3-cumplimiento-gcp/gate/**
+      - .github/workflows/apply-dev.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un apply a la vez; nunca se cancela uno a medias.
+concurrency:
+  group: apply-dev
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: equipo3-cumplimiento-gcp
+
+env:
+  TF_VERSION: "1.9.8"
+  CONFTEST_VERSION: "0.55.0"
+
+jobs:
+  apply:
+    name: apply-dev
+    # Hasta que exista el proyecto de GCP (HU-07) este workflow no hace nada.
+    if: ${{ vars.GCP_WIF_PROVIDER != '' && vars.GCP_APPLY_SA != '' && vars.GCP_PROJECT_ID != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation: sin llaves JSON
+    env:
+      TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Conftest
+        run: |
+          curl -fsSL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" | tar -xz conftest
+          sudo mv conftest /usr/local/bin/
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      # La cuenta apply-dev solo se puede asumir desde refs/heads/main.
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_APPLY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Plan de dev
+        working-directory: equipo3-cumplimiento-gcp/infra/environments/dev
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${TF_VAR_project_id}-tfstate" \
+            -backend-config="prefix=environments/dev"
+          terraform plan -input=false -out=tfplan
+          terraform show -json tfplan > plan.json
+          echo "PLAN_SHA256=$(sha256sum tfplan | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - name: Veredicto de las políticas
+        env:
+          MODO_POLITICAS: ${{ vars.MODO_POLITICAS }}
+          ORIGEN: apply
+          AMBIENTE: dev
+          COMMIT_SHA: ${{ github.sha }}
+        run: python3 gate/evaluar_plan.py
+
+      # Antes del apply: si la evidencia no se puede publicar, no se aplica.
+      - name: Publicar la evaluación en el bus
+        run: |
+          gcloud pubsub topics publish cumplimiento-eventos \
+            --project "$TF_VAR_project_id" \
+            --message "$(cat evento.json)" \
+            --attribute "tipo=gate.resultado,ambiente=dev"
+
+      - name: Aplicar el plan evaluado
+        working-directory: equipo3-cumplimiento-gcp/infra/environments/dev
+        run: |
+          echo "${PLAN_SHA256}  tfplan" | sha256sum --check
+          terraform apply -input=false tfplan

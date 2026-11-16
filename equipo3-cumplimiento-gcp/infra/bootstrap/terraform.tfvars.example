@@ -1,5 +1,16 @@
-project_id         = "cambia-por-el-proyecto-dev"
-billing_account    = "000000-000000-000000"
-budget_amount_usd  = 50
-region             = "us-central1"
-github_repository  = "Pedroxls/Comunicaciones-Avanzadas"
+# Copiar a terraform.tfvars (no se sube al repositorio) y llenar.
+project_id        = "cambia-por-el-proyecto-dev"
+billing_account   = "000000-000000-000000"
+budget_amount_usd = 50
+region            = "us-central1"
+github_repository = "Pedroxls/Comunicaciones-Avanzadas"
+
+# Personas (RF-14). Forma: "user:correo@dominio".
+# miembros_plataforma   = []
+# miembros_seguridad    = []
+# miembros_cumplimiento = []
+# miembros_auditoria    = []
+
+# Encender cuando exista lo que cada uno necesita (docs/runbooks/puesta-en-marcha.md).
+# usar_vertex      = true   # después de confirmar la cuota de Vertex AI (R-07)
+# slack_habilitado = true   # después de cargar el token en el secreto slack-bot-token

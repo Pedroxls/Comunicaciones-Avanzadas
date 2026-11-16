@@ -1,0 +1,90 @@
+# Construye las imágenes del agente, la evidencia, el freno y el drift, las sube
+# a Artifact Registry y las despliega en Cloud Run. Terraform crea los servicios
+# con una imagen de muestra; este workflow pone la real en cada merge a main.
+name: build-images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - equipo3-cumplimiento-gcp/agent/**
+      - equipo3-cumplimiento-gcp/services/**
+      - equipo3-cumplimiento-gcp/sensors/**
+      - equipo3-cumplimiento-gcp/comun/**
+      - equipo3-cumplimiento-gcp/policies/**
+      - equipo3-cumplimiento-gcp/infra/environments/**
+      - equipo3-cumplimiento-gcp/infra/modules/**
+      - .github/workflows/build-images.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-images
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: equipo3-cumplimiento-gcp
+
+jobs:
+  imagen:
+    name: ${{ matrix.nombre }}
+    # Hasta que exista el proyecto de GCP (HU-07) este workflow no hace nada.
+    if: ${{ vars.GCP_WIF_PROVIDER != '' && vars.GCP_DEPLOY_SA != '' && vars.GCP_PROJECT_ID != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation: sin llaves JSON
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nombre: agente
+            dockerfile: agent/Dockerfile
+            servicio: agente
+          - nombre: evidencia
+            dockerfile: services/evidence/Dockerfile
+            servicio: evidencia
+          - nombre: freno
+            dockerfile: services/freno/Dockerfile
+            servicio: freno-costos
+          # La misma imagen corre como servicio (por evento) y como job (cada hora).
+          - nombre: drift
+            dockerfile: sensors/drift/Dockerfile
+            servicio: drift
+            job: drift
+    env:
+      PROYECTO: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # La cuenta despliegue solo se puede asumir desde refs/heads/main.
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Construir y subir
+        run: |
+          IMAGEN="${REGION}-docker.pkg.dev/${PROYECTO}/cumplimiento/${{ matrix.nombre }}:${GITHUB_SHA}"
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build -f "${{ matrix.dockerfile }}" -t "$IMAGEN" .
+          docker push "$IMAGEN"
+          echo "IMAGEN=$IMAGEN" >> "$GITHUB_ENV"
+
+      - name: Desplegar el servicio
+        run: |
+          gcloud run services update "${{ matrix.servicio }}" \
+            --image "$IMAGEN" --region "$REGION" --project "$PROYECTO" --quiet
+
+      - name: Desplegar el job
+        if: ${{ matrix.job != '' }}
+        run: |
+          gcloud run jobs update "${{ matrix.job }}" \
+            --image "$IMAGEN" --region "$REGION" --project "$PROYECTO" --quiet

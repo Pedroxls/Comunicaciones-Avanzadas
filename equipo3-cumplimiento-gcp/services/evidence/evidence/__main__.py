@@ -1,41 +1,46 @@
-"""Registrador de evidencia. No usa un modelo."""
+"""Registrador de evidencia.
+
+  python -m evidence                      servicio HTTP (Cloud Run)
+  python -m evidence verificar <bucket>   verifica la cadena leyendo el bucket
+
+El segundo modo es para Auditoría: con permiso de lectura sobre el bucket
+comprueba la cadena desde su máquina, sin confiar en el servicio.
+"""
 
 import json
 import os
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import sys
 
+from comun.http import servir
 from evidence.api import Servicio
+from evidence.indice import IndiceBigQuery, IndiceMemoria
+from evidence.store import Almacen, ObjetosGCS, ObjetosMemoria
+
+
+def servicio_desde_entorno() -> Servicio:
+    bucket = os.environ.get("EVIDENCIA_BUCKET", "")
+    proyecto = os.environ.get("PROYECTO", "")
+    dataset = os.environ.get("DATASET", "")
+    if bucket:
+        almacen = Almacen(ObjetosGCS(bucket), base_uri=f"gs://{bucket}/")
+    else:
+        print("EVIDENCIA_BUCKET no está definido: la evidencia vive en memoria y se pierde al reiniciar", file=sys.stderr)
+        almacen = Almacen(ObjetosMemoria())
+    indice = IndiceBigQuery(proyecto, dataset) if proyecto and dataset else IndiceMemoria()
+    return Servicio(almacen, indice, retencion_seg=int(os.environ.get("RETENCION_SEG", "0") or 0))
+
+
+def verificar(bucket: str) -> int:
+    resultado = Almacen(ObjetosGCS(bucket), base_uri=f"gs://{bucket}/").verificar()
+    resultado.pop("en_rango")
+    print(json.dumps(resultado, ensure_ascii=False, indent=2))
+    return 0 if resultado["integra"] else 1
 
 
 def main() -> None:
-    servicio = Servicio()
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_GET(self):  # noqa: N802
-            self._responder(*servicio.manejar("GET", self.path, {}))
-
-        def do_POST(self):  # noqa: N802
-            self._responder(*servicio.manejar("POST", self.path, self._cuerpo()))
-
-        def _cuerpo(self) -> dict:
-            largo = int(self.headers.get("Content-Length", "0") or 0)
-            if largo == 0:
-                return {}
-            return json.loads(self.rfile.read(largo))
-
-        def _responder(self, status: int, body: dict) -> None:
-            data = json.dumps(body).encode()
-            self.send_response(status)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
-
-        def log_message(self, fmt: str, *args) -> None:
-            return
-
-    puerto = int(os.environ.get("PORT", "8080"))
-    ThreadingHTTPServer(("0.0.0.0", puerto), Handler).serve_forever()
+    if len(sys.argv) == 3 and sys.argv[1] == "verificar":
+        sys.exit(verificar(sys.argv[2]))
+    servir(servicio_desde_entorno().manejar)
 
 
 if __name__ == "__main__":

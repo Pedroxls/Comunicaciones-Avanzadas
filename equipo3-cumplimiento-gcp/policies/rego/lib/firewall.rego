@@ -1,6 +1,11 @@
 # Funciones compartidas de las políticas de firewall.
 # Un puerto está abierto a internet si una regla de entrada lo permite desde
 # 0.0.0.0/0 o ::/0. Sin lista de puertos, o con protocolo "all", GCP permite todos.
+#
+# Lo que el plan no conoce se evalúa como el peor caso:
+# - Sin `direction`, GCP crea la regla como INGRESS y el plan no trae el campo.
+# - Sin `disabled`, el plan trae null: la regla está activa.
+# - Un `source_ranges` que solo se conoce al aplicar puede ser internet.
 package lib.firewall
 
 import rego.v1
@@ -11,8 +16,14 @@ cambios contains rc if {
 	some rc in input.resource_changes
 	rc.type == "google_compute_firewall"
 	evaluar_cambio(rc)
-	rc.change.after.direction == "INGRESS"
-	not rc.change.after.disabled
+	es_entrada(rc)
+	not deshabilitada(rc)
+}
+
+deshabilitada(rc) if rc.change.after.disabled == true
+
+es_entrada(rc) if {
+	object.get(rc.change.after, "direction", null) in {"INGRESS", "", null}
 }
 
 evaluar_cambio(rc) if {
@@ -30,6 +41,11 @@ puerto_abierto(rc, puerto) if {
 algun_rango_de_internet(rc) if {
 	some rango in rc.change.after.source_ranges
 	rango in internet
+}
+
+algun_rango_de_internet(rc) if {
+	desconocido := object.get(rc.change, "after_unknown", {})
+	object.get(desconocido, "source_ranges", false) == true
 }
 
 protocolo_tcp_o_todos(regla) if {

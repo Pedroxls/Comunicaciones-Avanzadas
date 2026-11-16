@@ -1,13 +1,13 @@
-# Reemplaza cada marcador por el usuario de GitHub real (con @) antes de que
-# la protección de main exija revisión de code owners.
-# Las rutas salen de la raíz del repositorio.
+# Quién revisa cada parte. Las rutas salen de la raíz del repositorio.
+# Antes de exigir la revisión de code owners en la protección de main, cada
+# ruta necesita al menos dos personas (ver scripts/configurar_github.sh).
 
 # Por defecto, cualquier cambio lo revisa el líder del proyecto
 *                     @Pedroxls
 
 # Políticas y catálogo de controles: los aprueba Seguridad
-/equipo3-cumplimiento-gcp/policies/            @USUARIO_GITHUB_DIEGO
-/equipo3-cumplimiento-gcp/policies/catalog/    @USUARIO_GITHUB_DIEGO
+/equipo3-cumplimiento-gcp/policies/            @DiegoRoca05
+/equipo3-cumplimiento-gcp/policies/catalog/    @DiegoRoca05
 
 # Bootstrap de GCP (estado, identidad del pipeline, presupuesto): el líder
 /equipo3-cumplimiento-gcp/infra/bootstrap/     @Pedroxls
@@ -17,7 +17,7 @@
 /equipo3-cumplimiento-gcp/sensors/drift/          @Pedroxls
 
 # Agente y sus pruebas
-/equipo3-cumplimiento-gcp/agent/               @USUARIO_GITHUB_PAULO
+/equipo3-cumplimiento-gcp/agent/               @A00837745
 
 # Pipeline
-/.github/workflows/   @Pedroxls @USUARIO_GITHUB_PAULO
+/.github/workflows/   @Pedroxls @A00837745

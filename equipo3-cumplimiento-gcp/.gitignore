@@ -19,6 +19,8 @@ tfplan
 *.tfplan
 plan.json
 veredicto.md
+evento.json
+costo.md
 
 # Credenciales: nunca en el repositorio
 *-key.json

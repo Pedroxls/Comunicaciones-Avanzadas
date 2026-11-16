@@ -213,7 +213,7 @@ politicas:
 
   - politica_id: sensor.drift
     control_id: CTL-GOB-01
-    archivo: sensors/drift/drift/evaluar.py
-    prueba: sensors/drift/tests/test_hallazgo.py
+    archivo: sensors/drift/drift/servicio.py
+    prueba: sensors/drift/tests/test_drift.py
     motor: job
     version: v0.1.0
