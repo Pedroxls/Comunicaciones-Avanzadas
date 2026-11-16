@@ -149,7 +149,7 @@ Exige PR, una aprobación y los cuatro checks; deja solo squash y borra la rama 
 
 Ninguna se resuelve con código hasta que alguien decida.
 
-1. **Checkov deja `estatico` en rojo.** Quedan seis chequeos que el código no cumple: cifrado con llaves propias en BigQuery, Pub/Sub y Artifact Registry (CKV_GCP_80, 81, 83 y 84), registro de accesos en los buckets (CKV_GCP_62) y acceso privado IPv6 en la subred (CKV_GCP_76). Las opciones son construir un módulo de KMS (HU-12) o que Seguridad acepte omitirlos con un archivo `.checkov.yaml`, cada uno con su motivo. Mientras no se decida, ningún PR pasa `estatico`.
+1. **Checkov del piloto.** Los seis chequeos que no entran en la demo (CKV_GCP_80, 81, 83, 84, 62 y 76) se omiten en `.checkov.yaml`, cada uno con su motivo. No se construye KMS: no apaga el registro de accesos ni IPv6, y recrearía recursos ya aplicados. Cualquier otro chequeo sigue fallando `estatico`. Lo aprueba Seguridad.
 2. **El freno no destruye nada.** Avisa al 50, 90 y 100 %, pero `frenar()` se niega a borrar. Activarlo exige definir qué es un «ambiente temporal»; hoy todo lo desplegado escala a cero y no hay nada que valga la pena destruir.
 3. **Candado de la retención.** `lock_evidence_retention` queda en `false`: activarlo es irreversible (R-06). La retención definitiva espera la respuesta a P-12.
 4. **Referencias CIS por confirmar.** CTL-IAM-01, CTL-IAM-02, CTL-LOG-01 y CTL-STO-01 siguen marcadas `ref_cis_por_confirmar` contra la v5.0.0 del benchmark.
