@@ -1,0 +1,12 @@
+[
+  {"name": "decision_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "evento_origen_id", "type": "STRING", "mode": "NULLABLE", "description": "Evento que el agente explicó"},
+  {"name": "controles", "type": "STRING", "mode": "NULLABLE", "description": "Lista JSON de controles explicados"},
+  {"name": "razonamiento", "type": "STRING", "mode": "NULLABLE", "description": "Explicación que dio el agente"},
+  {"name": "herramientas", "type": "STRING", "mode": "NULLABLE", "description": "Lista JSON de herramientas que usó"},
+  {"name": "accion", "type": "STRING", "mode": "NULLABLE", "description": "slack, log, pr o ninguna"},
+  {"name": "fuente", "type": "STRING", "mode": "NULLABLE", "description": "vertex o plantilla"},
+  {"name": "modelo", "type": "STRING", "mode": "NULLABLE"},
+  {"name": "registrado_en", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "evidencia_id", "type": "STRING", "mode": "REQUIRED"}
+]

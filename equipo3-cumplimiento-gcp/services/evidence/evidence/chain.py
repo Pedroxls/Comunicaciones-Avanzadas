@@ -26,11 +26,16 @@ def encadenar(registro: dict, hash_anterior: str) -> dict:
 
 
 def verificar_cadena(registros: list) -> str | None:
-    """Devuelve el evidencia_id del primer registro alterado, o None si la cadena cierra."""
+    """Devuelve el evidencia_id del primer registro alterado, o None si la cadena cierra.
+
+    Un registro borrado rompe la cadena en el siguiente: su hash_anterior ya no
+    coincide y su secuencia deja un hueco.
+    """
     anterior = GENESIS
-    for registro in registros:
+    for posicion, registro in enumerate(registros, start=1):
         esperado = sha256_hex(canonico(_cuerpo(registro)) + anterior)
-        if registro.get("hash_anterior") != anterior or registro.get("sha256") != esperado:
+        secuencia = registro.get("secuencia", posicion)
+        if registro.get("hash_anterior") != anterior or registro.get("sha256") != esperado or secuencia != posicion:
             return str(registro.get("evidencia_id", ""))
         anterior = registro["sha256"]
     return None

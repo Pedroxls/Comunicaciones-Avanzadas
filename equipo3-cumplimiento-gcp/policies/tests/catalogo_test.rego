@@ -153,6 +153,12 @@ test_bucket_con_etiquetas_pasa if {
 	count(r) == 0
 }
 
+# El plan real trae `labels: null` cuando el recurso no declara etiquetas.
+test_bucket_con_labels_nulo_falla if {
+	r := etiquetas.warn with input as cambio("google_storage_bucket", "google_storage_bucket.evidencia", {"name": "evidencia", "labels": null})
+	tiene(r, "CTL-ETQ-01")
+}
+
 # CTL-GOB-02
 test_firewall_suelto_falla if {
 	r := modulo_aprobado.warn with input as cambio("google_compute_firewall", "google_compute_firewall.suelto", {"name": "suelto", "direction": "INGRESS"})

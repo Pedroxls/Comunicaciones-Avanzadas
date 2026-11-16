@@ -1,10 +1,15 @@
 [
-  {"name": "evaluacion_id", "type": "STRING", "mode": "REQUIRED"},
-  {"name": "origen", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "evaluacion_id", "type": "STRING", "mode": "REQUIRED", "description": "Id del evento que trajo la evaluación"},
+  {"name": "origen", "type": "STRING", "mode": "REQUIRED", "description": "pr, apply o drift"},
+  {"name": "alcance", "type": "STRING", "mode": "REQUIRED", "description": "completo (todo el ambiente) o recurso (un cambio manual)"},
   {"name": "ambiente", "type": "STRING", "mode": "REQUIRED"},
   {"name": "commit_sha", "type": "STRING", "mode": "NULLABLE"},
   {"name": "pr_numero", "type": "INTEGER", "mode": "NULLABLE"},
-  {"name": "resultado", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "resultado", "type": "STRING", "mode": "REQUIRED", "description": "aprobado, bloqueado, con_advertencias o alerta"},
+  {"name": "modo", "type": "STRING", "mode": "NULLABLE", "description": "bloqueo o advertencia"},
+  {"name": "plan_sha256", "type": "STRING", "mode": "NULLABLE", "description": "Hash del plan que se aplicó"},
   {"name": "duracion_seg", "type": "FLOAT", "mode": "NULLABLE"},
-  {"name": "registrado_en", "type": "TIMESTAMP", "mode": "REQUIRED"}
+  {"name": "ocurrido_en", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "registrado_en", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "evidencia_id", "type": "STRING", "mode": "REQUIRED"}
 ]

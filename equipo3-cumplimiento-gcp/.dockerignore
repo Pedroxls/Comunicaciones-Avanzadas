@@ -1,0 +1,14 @@
+# El contexto de build es esta carpeta: docker build -f <servicio>/Dockerfile .
+**/.terraform
+**/__pycache__
+**/.pytest_cache
+**/tests
+**/*.tfstate*
+**/*.tfvars
+**/tfplan
+**/plan.json
+.git
+docs
+veredicto.md
+evento.json
+costo.md

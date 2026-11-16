@@ -96,3 +96,32 @@ test_regla_que_se_elimina_pasa if {
 	borrado := json.patch(entrada, [{"op": "replace", "path": "/resource_changes/0/change/actions", "value": ["delete"]}])
 	count(ssh_abierto.deny) == 0 with input as borrado
 }
+
+# Sin `direction` GCP crea la regla como INGRESS. El plan real no trae el campo.
+test_telnet_sin_direction_falla if {
+	entrada := plan_firewall("legacy", "tcp", ["23"], ["0.0.0.0/0"])
+	sin_direction := json.remove(entrada, ["/resource_changes/0/change/after/direction"])
+	tiene(telnet_abierto.deny, "CTL-RED-04") with input as sin_direction
+}
+
+# Un rango que solo se conoce al aplicar se trata como internet.
+test_rango_desconocido_falla if {
+	entrada := plan_firewall("calculado", "tcp", ["22"], [])
+	sin_rangos := json.remove(entrada, ["/resource_changes/0/change/after/source_ranges"])
+	desconocido := json.patch(sin_rangos, [{"op": "add", "path": "/resource_changes/0/change/after_unknown", "value": {"source_ranges": true}}])
+	tiene(ssh_abierto.deny, "CTL-RED-01") with input as desconocido
+}
+
+# Una regla deshabilitada no abre nada.
+test_regla_deshabilitada_pasa if {
+	entrada := plan_firewall("apagada", "tcp", ["22"], ["0.0.0.0/0"])
+	apagada := json.patch(entrada, [{"op": "add", "path": "/resource_changes/0/change/after/disabled", "value": true}])
+	count(ssh_abierto.deny) == 0 with input as apagada
+}
+
+# El plan real trae `disabled: null` cuando no se escribe. La regla está activa.
+test_disabled_nulo_falla if {
+	entrada := plan_firewall("legacy", "tcp", ["23"], ["0.0.0.0/0"])
+	nulo := json.patch(entrada, [{"op": "add", "path": "/resource_changes/0/change/after/disabled", "value": null}])
+	tiene(telnet_abierto.deny, "CTL-RED-04") with input as nulo
+}

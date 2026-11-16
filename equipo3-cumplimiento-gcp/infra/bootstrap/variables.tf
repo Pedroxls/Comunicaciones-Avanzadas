@@ -32,7 +32,7 @@ variable "bq_location" {
 }
 
 variable "github_repository" {
-  description = "Repositorio que puede asumir la cuenta de plan, en forma dueno/nombre."
+  description = "Repositorio que puede asumir las cuentas del pipeline, en forma dueno/nombre."
   type        = string
   default     = "Pedroxls/Comunicaciones-Avanzadas"
 }
@@ -49,62 +49,92 @@ variable "lock_evidence_retention" {
   default     = false
 }
 
-variable "enable_cost_killswitch" {
-  description = "Crea el servicio del freno. El código del freno igual se niega a destruir recursos."
+variable "proteger_tablas" {
+  description = "Impide que Terraform borre las tablas y vistas de BigQuery. Cambiar la consulta de una vista sigue funcionando. Pasar a false solo para destruir dev."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_cloud_run" {
-  description = "Crea Cloud Run, el job de drift y Artifact Registry. Apagado hasta tener imágenes."
+  description = "Crea Artifact Registry, los servicios de Cloud Run, el job de drift y las suscripciones push. Nacen con una imagen de muestra; el workflow build-images despliega las reales."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_drift_sink" {
-  description = "Crea el sink de Audit Logs hacia Pub/Sub. No se activa desde este repo."
+  description = "Crea el sink de Audit Logs hacia el tema auditoria-cambios."
+  type        = bool
+  default     = true
+}
+
+variable "enable_cost_killswitch" {
+  description = "Pasa KILL_ENABLED=true al freno. El código del freno igual se niega a destruir recursos."
   type        = bool
   default     = false
 }
 
-variable "agent_image" {
-  description = "Imagen del agente. Sustituirla por la de Artifact Registry al construirla."
+variable "imagen_inicial_servicio" {
+  description = "Imagen con la que nacen los servicios. Terraform no la vuelve a tocar: el despliegue la reemplaza."
   type        = string
   default     = "us-docker.pkg.dev/cloudrun/container/hello"
 }
 
-variable "evidence_image" {
-  description = "Imagen del registrador de evidencia."
+variable "imagen_inicial_job" {
+  description = "Imagen con la que nace el job de drift. Termina sola, así que la verificación horaria no cuesta mientras no haya imagen real."
   type        = string
-  default     = "us-docker.pkg.dev/cloudrun/container/hello"
+  default     = "us-docker.pkg.dev/cloudrun/container/job"
 }
 
-variable "drift_image" {
-  description = "Imagen del job de drift."
+variable "usar_vertex" {
+  description = "El agente explica con Gemini. En false responde con la plantilla (R-07: confirmar la cuota antes)."
+  type        = bool
+  default     = false
+}
+
+variable "gemini_model" {
+  description = "Modelo de Gemini en Vertex AI. Revisar que siga vigente: los modelos se retiran cada año."
   type        = string
-  default     = "us-docker.pkg.dev/cloudrun/container/hello"
+  default     = "gemini-3.8-flash"
+}
+
+variable "vertex_location" {
+  description = "Ubicación de Vertex AI."
+  type        = string
+  default     = "us-central1"
+}
+
+variable "slack_habilitado" {
+  description = "Monta el token de Slack en el agente. Poner en true después de cargar una versión en el secreto slack-bot-token."
+  type        = bool
+  default     = false
+}
+
+variable "slack_canal" {
+  description = "Canal de Slack de las alertas."
+  type        = string
+  default     = "#cumplimiento-alertas"
 }
 
 variable "miembros_plataforma" {
-  description = "Miembros user:correo con permiso de red. Vacío hasta conocer las cuentas."
+  description = "Miembros user:correo con permiso de red en dev. Vacío hasta conocer las cuentas."
   type        = list(string)
   default     = []
 }
 
 variable "miembros_seguridad" {
-  description = "Miembros que revisan políticas. Vacío hasta conocer las cuentas."
+  description = "Miembros que revisan IAM y registros. Vacío hasta conocer las cuentas."
   type        = list(string)
   default     = []
 }
 
 variable "miembros_cumplimiento" {
-  description = "Miembros de solo lectura para reportes."
+  description = "Miembros que consultan el reporte (BigQuery, solo lectura)."
   type        = list(string)
   default     = []
 }
 
 variable "miembros_auditoria" {
-  description = "Miembros de solo lectura para evidencia."
+  description = "Miembros que consultan el reporte y leen la evidencia (solo lectura)."
   type        = list(string)
   default     = []
 }

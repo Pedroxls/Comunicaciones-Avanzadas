@@ -1,5 +1,5 @@
 # Validación de cada Pull Request hacia main (HU-01).
-# Marca como obligatorios en la protección de main: estatico, politicas, secretos y cumplimiento.
+# Checks obligatorios en la protección de main: estatico, politicas, secretos y cumplimiento.
 # GitHub solo carga workflows de la raíz. El código está en equipo3-cumplimiento-gcp/.
 name: pr-validate
 
@@ -19,9 +19,13 @@ defaults:
   run:
     working-directory: equipo3-cumplimiento-gcp
 
+# Versiones fijas (RNF-11). El sensor de drift usa las mismas de Terraform y
+# Conftest: sensors/drift/instalar_herramientas.py.
 env:
   TF_VERSION: "1.9.8"
   CONFTEST_VERSION: "0.55.0"
+  OPA_VERSION: "v1.22.4"
+  CHECKOV_VERSION: "3.1.47"
 
 jobs:
   estatico:
@@ -57,12 +61,15 @@ jobs:
       - name: terraform test (módulo de red)
         run: terraform -chdir=infra/modules/network test
 
-      - name: Checkov (chequeos CIS sobre el código)
-        uses: bridgecrewio/checkov-action@v12
+      - uses: actions/setup-python@v5
         with:
-          directory: equipo3-cumplimiento-gcp/infra
-          framework: terraform
-          quiet: true
+          python-version: "3.12"
+
+      # Si existe equipo3-cumplimiento-gcp/.checkov.yaml, Checkov lo toma de ahí.
+      - name: Checkov (chequeos CIS sobre el código)
+        run: |
+          python -m pip install --quiet "checkov==${CHECKOV_VERSION}"
+          checkov -d infra --framework terraform --quiet --compact
 
   politicas:
     name: politicas
@@ -73,7 +80,7 @@ jobs:
 
       - uses: open-policy-agent/setup-opa@v2
         with:
-          version: latest
+          version: ${{ env.OPA_VERSION }}
 
       - name: opa fmt (sin cambios pendientes)
         run: opa fmt --fail --list policies
@@ -81,19 +88,27 @@ jobs:
       - name: opa test (un caso que pasa y uno que falla por política)
         run: opa test policies -v
 
+      - name: Instalar Conftest
+        run: |
+          curl -fsSL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" | tar -xz conftest
+          sudo mv conftest /usr/local/bin/
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: pytest de evidencia, drift, agente y freno
+      - name: pytest del gate, el catálogo, los servicios y los flujos completos
         run: |
-          python -m pip install --quiet pytest
-          python -m pytest services/evidence/tests sensors/drift/tests agent/tests infra/bootstrap/killswitch -q
+          python -m pip install --quiet pytest -r agent/requirements.txt
+          python -m pytest gate/tests tests services sensors agent/tests -q
 
   secretos:
     name: secretos
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read # gitleaks lista los commits del PR
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,6 +117,39 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # No es un check obligatorio: comprueba que las cuatro imágenes construyen y arrancan.
+  imagenes:
+    name: imagenes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nombre: agente
+            dockerfile: agent/Dockerfile
+          - nombre: evidencia
+            dockerfile: services/evidence/Dockerfile
+          - nombre: freno
+            dockerfile: services/freno/Dockerfile
+          - nombre: drift
+            dockerfile: sensors/drift/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir la imagen
+        run: docker build -f "${{ matrix.dockerfile }}" -t "prueba-${{ matrix.nombre }}" .
+
+      - name: La imagen arranca y responde sin credenciales de GCP
+        run: |
+          docker run -d --name servicio -p 8080:8080 "prueba-${{ matrix.nombre }}"
+          for intento in $(seq 1 20); do
+            if curl -fsS http://localhost:8080/healthz; then exit 0; fi
+            sleep 1
+          done
+          docker logs servicio
+          exit 1
 
   cumplimiento:
     name: cumplimiento
@@ -112,45 +160,59 @@ jobs:
       contents: read
       id-token: write # Workload Identity Federation: sin llaves JSON
       pull-requests: write
+    env:
+      CON_GCP: ${{ vars.GCP_WIF_PROVIDER != '' && vars.GCP_PLAN_SA != '' && vars.GCP_PROJECT_ID != '' }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Aviso mientras no exista la federación de identidad
-        if: ${{ vars.GCP_WIF_PROVIDER == '' }}
-        run: echo "::notice::Falta configurar GCP_WIF_PROVIDER, GCP_PLAN_SA y GCP_PROJECT_ID (HU-07). El plan contra GCP se omite; el fixture de Telnet sí se evalúa."
 
       - name: Instalar Conftest
         run: |
           curl -fsSL "https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz" | tar -xz conftest
           sudo mv conftest /usr/local/bin/
 
-      - name: El plan con Telnet abierto produce CTL-RED-04
+      - name: El gate detecta Telnet abierto y deja pasar la red base
         run: sh gate/fixtures/comprobar_gate.sh
 
-      - uses: google-github-actions/auth@v2
-        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
-        with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_PLAN_SA }}
-
       - uses: hashicorp/setup-terraform@v3
-        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
-      - name: Plan de dev en JSON
-        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
+      - uses: google-github-actions/auth@v2
+        if: env.CON_GCP == 'true'
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAN_SA }}
+
+      - name: Plan de dev contra el estado real
+        if: env.CON_GCP == 'true'
         working-directory: equipo3-cumplimiento-gcp/infra/environments/dev
         env:
           TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
         run: |
-          terraform init -input=false
+          terraform init -input=false \
+            -backend-config="bucket=${TF_VAR_project_id}-tfstate" \
+            -backend-config="prefix=environments/dev"
           terraform plan -input=false -lock=false -out=tfplan
           terraform show -json tfplan > plan.json
 
+      # Sin proyecto de GCP el gate igual evalúa el Terraform del PR: planea
+      # todo como si se creara desde cero, con un estado local vacío.
+      - name: Plan de dev sin credenciales de GCP
+        if: env.CON_GCP != 'true'
+        working-directory: equipo3-cumplimiento-gcp/infra/environments/dev
+        env:
+          GOOGLE_OAUTH_ACCESS_TOKEN: sin-credenciales
+          TF_VAR_project_id: sin-credenciales
+        run: |
+          echo "::notice::Faltan GCP_WIF_PROVIDER, GCP_PLAN_SA y GCP_PROJECT_ID (HU-07). El plan se genera sin credenciales."
+          printf 'terraform {\n  backend "local" {}\n}\n' > backend_override.tf
+          terraform init -input=false
+          terraform plan -input=false -lock=false -refresh=false -out=tfplan
+          terraform show -json tfplan > plan.json
+          echo "PLAN_SIN_CREDENCIALES=1" >> "$GITHUB_ENV"
+
       - name: Infracost
-        if: ${{ vars.GCP_WIF_PROVIDER != '' }}
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
         run: |
@@ -159,31 +221,63 @@ jobs:
             exit 0
           fi
           curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
-          infracost breakdown --path infra/environments/dev/plan.json --format table
+          infracost breakdown --path infra/environments/dev/plan.json --format table --out-file costo.md
 
-      - name: Conftest del plan real
-        id: plan
+      # El agente solo aporta la explicación. Si este paso o el agente fallan,
+      # el comentario dice «explicación pendiente» y el veredicto no cambia.
+      - id: token_agente
+        if: env.CON_GCP == 'true' && vars.AGENTE_URL != ''
+        continue-on-error: true
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAN_SA }}
+          token_format: id_token
+          id_token_audience: ${{ vars.AGENTE_URL }}
+          id_token_include_email: true
+
+      - name: Veredicto de las políticas
+        if: ${{ !cancelled() }}
         env:
           MODO_POLITICAS: ${{ vars.MODO_POLITICAS }}
           AGENTE_URL: ${{ vars.AGENTE_URL }}
-        run: sh gate/evaluar_plan.sh
+          AGENTE_TOKEN: ${{ steps.token_agente.outputs.id_token }}
+          ORIGEN: pr
+          AMBIENTE: dev
+          PR_NUMERO: ${{ github.event.pull_request.number }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 gate/evaluar_plan.py
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: ${{ !cancelled() && env.CON_GCP == 'true' }}
+
+      - name: Publicar el resultado en el bus
+        if: ${{ !cancelled() && env.CON_GCP == 'true' && hashFiles('equipo3-cumplimiento-gcp/evento.json') != '' }}
         continue-on-error: true
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          gcloud pubsub topics publish cumplimiento-eventos \
+            --project "$GCP_PROJECT_ID" \
+            --message "$(cat evento.json)" \
+            --attribute "tipo=gate.resultado,ambiente=dev"
 
       - name: Comentario en el PR
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && hashFiles('equipo3-cumplimiento-gcp/veredicto.md') != '' }}
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const path = 'equipo3-cumplimiento-gcp/veredicto.md';
-            const body = fs.readFileSync(path, 'utf8');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+            const body = fs.readFileSync('equipo3-cumplimiento-gcp/veredicto.md', 'utf8');
+            const marca = '<!-- cumplimiento -->';
+            const destino = { owner: context.repo.owner, repo: context.repo.repo };
+            const comentarios = await github.paginate(github.rest.issues.listComments, {
+              ...destino,
               issue_number: context.issue.number,
-              body
             });
-
-      - name: El modo bloqueo falla el check
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
+            const previo = comentarios.find((c) => c.user.type === 'Bot' && c.body.includes(marca));
+            if (previo) {
+              await github.rest.issues.updateComment({ ...destino, comment_id: previo.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...destino, issue_number: context.issue.number, body });
+            }

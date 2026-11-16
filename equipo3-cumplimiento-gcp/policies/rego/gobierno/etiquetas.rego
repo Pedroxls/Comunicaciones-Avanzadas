@@ -25,7 +25,11 @@ warn contains msg if {
 
 faltantes(rc) := [clave |
 	some clave in obligatorias
-	etiquetas := object.get(rc.change.after, "labels", {})
-	is_object(etiquetas)
-	object.get(etiquetas, clave, "") == ""
+	object.get(etiquetas_de(rc), clave, "") == ""
 ]
+
+# Sin bloque `labels` el plan real trae null: faltan todas.
+etiquetas_de(rc) := etiquetas if {
+	etiquetas := rc.change.after.labels
+	is_object(etiquetas)
+} else := {}
