@@ -5,9 +5,10 @@
 # Por defecto, cualquier cambio lo revisa el líder del proyecto
 *                     @Pedroxls
 
-# Políticas y catálogo de controles: los aprueba Seguridad
+# Políticas, catálogo y omisiones de Checkov: los aprueba Seguridad
 /equipo3-cumplimiento-gcp/policies/            @DiegoRoca05
 /equipo3-cumplimiento-gcp/policies/catalog/    @DiegoRoca05
+/equipo3-cumplimiento-gcp/.checkov.yaml        @DiegoRoca05
 
 # Bootstrap de GCP (estado, identidad del pipeline, presupuesto): el líder
 /equipo3-cumplimiento-gcp/infra/bootstrap/     @Pedroxls

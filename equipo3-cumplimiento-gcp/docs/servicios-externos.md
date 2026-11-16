@@ -34,7 +34,7 @@ El costo de GCP es una estimación, no una medición: todos los servicios escala
 
 Los workflows `apply-dev` y `build-images`, el gate corregido y el bootstrap completo están en la rama `fix/gate-y-servicios-conectados`, sin commit. GitHub solo ejecuta `gh workflow run` sobre workflows que ya están en `main`.
 
-1. Decidir qué se hace con Checkov. Quedan seis chequeos en rojo (cifrado con llaves propias en BigQuery, Pub/Sub y Artifact Registry; registro de accesos en buckets; IPv6 privado en la subred). O Seguridad acepta omitirlos con un archivo `.checkov.yaml`, o se construye un módulo de KMS. Mientras no se decida, el check `estatico` falla en todos los PR.
+1. Los seis chequeos de Checkov del piloto (cifrado con llaves propias, registro de accesos en buckets e IPv6) se omiten en `.checkov.yaml`, con el motivo de cada uno. Lo aprueba Seguridad. Cualquier otro hallazgo sigue fallando `estatico`.
 2. Hacer el commit, abrir el PR y fusionarlo con la revisión de otra persona.
 
 ## 1. Herramientas en la máquina de quien aplica
