@@ -1,0 +1,30 @@
+# Omisiones del piloto. El check estatico sigue fallando por cualquier
+# otro chequeo. No cubren el catálogo (CIS de red, IAM, auditoría ni
+# buckets públicos). Reabrirlas si el socio pide cifrado con llaves propias.
+#
+# No se usa un módulo de KMS: estos chequeos piden llaves que el cliente
+# administra (CSEK) o un registro de accesos y una subred IPv6 que el MVP
+# no demuestra. El bootstrap ya está aplicado, el presupuesto de la prueba
+# gratuita es de 1000 MXN y quedan 3 semanas. Un anillo de KMS no apaga
+# CKV_GCP_62 ni CKV_GCP_76, y cifrar de nuevo BigQuery, Pub/Sub y Artifact
+# Registry obligaría a recrear recursos que ya existen.
+
+skip-check:
+  # BigQuery con llave que aporta el cliente. En el piloto solo hay
+  # metadatos de cumplimiento, cifrados con las llaves de Google.
+  - CKV_GCP_80
+  # Dataset de BigQuery con la misma llave. Mismo motivo que CKV_GCP_80.
+  - CKV_GCP_81
+  # Temas de Pub/Sub con llave propia. El bus lleva eventos de cumplimiento,
+  # no datos de clientes, y ya está creado.
+  - CKV_GCP_83
+  # Artifact Registry con llave propia. Las imágenes del piloto no justifican
+  # otra llave ni otro costo fijo.
+  - CKV_GCP_84
+  # Registro de accesos del bucket. Haría falta otro bucket de logs y no
+  # está en los controles del catálogo. La evidencia se audita con la cadena
+  # de hashes, no con el access log.
+  - CKV_GCP_62
+  # Acceso privado de Google por IPv6. La subred de dev es solo IPv4 y tiene
+  # private_ip_google_access. IPv6 no entra en la demo.
+  - CKV_GCP_76
