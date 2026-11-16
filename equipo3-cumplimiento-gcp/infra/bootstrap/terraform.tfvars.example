@@ -2,6 +2,8 @@
 project_id        = "cambia-por-el-proyecto-dev"
 billing_account   = "000000-000000-000000"
 budget_amount_usd = 50
+# Misma moneda que la cuenta de facturación. USD es el default de variables.tf.
+# budget_currency = "MXN"
 region            = "us-central1"
 github_repository = "Pedroxls/Comunicaciones-Avanzadas"
 

@@ -4,13 +4,13 @@ Lo que hay que hacer fuera del código para que el MVP corra en GCP, en orden. C
 
 Este es el orden corto. Cómo se crea cada cuenta (Google Cloud, Slack, Looker Studio, Infracost) está paso a paso en [servicios-externos.md](../servicios-externos.md).
 
-Hasta el paso 3 nada de esto existe en la nube. Mientras tanto el check `cumplimiento` de cada PR ya evalúa el Terraform real: planea sin credenciales, como si todo se creara desde cero.
+El bootstrap de dev ya está aplicado y su estado vive en el bucket, no en una laptop. La red de ese ambiente todavía no: la crea `apply-dev`. Mientras no estén las variables de GitHub, el check `cumplimiento` planea sin credenciales, como si todo se creara desde cero.
 
 ## Antes de empezar
 
 - `gcloud`, `terraform` 1.9.8 y `gh` instalados.
 - Una cuenta de Google con rol Owner sobre el proyecto y permiso para crear presupuestos en la cuenta de cobro (Billing Account Costs Manager o Administrator). Si el paso 3 falla con un 403 en `google_billing_budget`, falta ese permiso: lo da quien administra la cuenta de cobro del curso.
-- El monto del presupuesto (pregunta P-13).
+- El monto del presupuesto y la moneda de la cuenta de facturación. Tienen que ser la misma: Google rechaza el presupuesto con error 400 si `budget_currency` no coincide con la cuenta. El nombre `budget_amount_usd` es el monto en esa moneda, no obliga a usar dólares.
 
 ## 1. Proyecto y facturación
 
@@ -34,10 +34,12 @@ El resto de las APIs las enciende Terraform.
 
 ```bash
 cd infra/bootstrap
-cp terraform.tfvars.example terraform.tfvars   # llenar project_id, billing_account y budget_amount_usd
+cp terraform.tfvars.example terraform.tfvars   # llenar project_id, billing_account, budget_amount_usd y budget_currency
 terraform init
 terraform apply
 ```
+
+`budget_currency` sale en `USD`. Si la cuenta de facturación es de México, en `terraform.tfvars` va `budget_currency = "MXN"`. La variable está en `variables.tf` a partir del PR de la moneda.
 
 Crea 106 recursos: identidades sin llaves, presupuesto con alertas, buckets de estado y de evidencia, el bus, BigQuery con sus vistas, Artifact Registry, los cuatro servicios de Cloud Run, el job de drift y el sink de Audit Logs. Los servicios nacen con una imagen de muestra; las reales llegan en el paso 5.
 
@@ -49,7 +51,25 @@ Después, borrar la red `default` que GCP crea en todo proyecto nuevo (control C
 sh ../modules/network/scripts/delete_default_network.sh <proyecto>
 ```
 
-El estado del bootstrap queda en tu máquina. Para que no dependa de una sola persona, se puede mover al bucket: agregar un archivo `backend.tf` con `terraform { backend "gcs" { bucket = "<proyecto>-tfstate", prefix = "bootstrap" } }` y correr `terraform init -migrate-state`.
+El estado no se commitea. Para volver a correr el bootstrap cuando ya está en el bucket, crear `infra/bootstrap/backend_override.tf`. El `.gitignore` ignora `*_override.tf`, así que no se sube:
+
+```hcl
+terraform {
+  backend "gcs" {
+    bucket = "<proyecto>-tfstate"
+    prefix = "bootstrap"
+  }
+}
+```
+
+En el proyecto de dev el bucket es `eq3-cumplimiento-dev-cc01-tfstate` y el prefijo es `bootstrap`. Desde `infra/bootstrap`:
+
+```bash
+terraform init
+terraform plan
+```
+
+No hace falta `-migrate-state` si el estado ya se movió. Si todavía está en la laptop, el mismo archivo y `terraform init -migrate-state` lo sube. No crear un `backend.tf` dentro del repositorio: quedaría apuntando a un proyecto real.
 
 ## 4. Variables de GitHub
 

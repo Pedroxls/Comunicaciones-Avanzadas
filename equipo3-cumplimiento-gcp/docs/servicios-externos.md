@@ -1,6 +1,6 @@
 # Servicios externos: qué falta y cómo se crea cada cosa
 
-Estado al 15 de noviembre de 2026. Todo el código del MVP está escrito y probado en la rama `fix/gate-y-servicios-conectados`, pero **ningún servicio externo existe todavía**: no hay proyecto de GCP, GitHub tiene 0 variables y 0 secretos, no hay app de Slack ni reporte en Looker Studio.
+Estado al 16 de noviembre de 2026. El código del MVP está en `main`. El bootstrap del proyecto `eq3-cumplimiento-dev-cc01` ya se aplicó y su estado está en `gs://eq3-cumplimiento-dev-cc01-tfstate/bootstrap`. Siguen sin existir las variables de GitHub, la app de Slack, la prueba de cuota de Vertex y el reporte de Looker Studio. La red de dev la crea `apply-dev`, que todavía no corre.
 
 Este documento lista cada servicio que vive fuera del repositorio, dice para qué se usa y da los pasos para crearlo. El orden corto de ejecución está en [runbooks/puesta-en-marcha.md](runbooks/puesta-en-marcha.md); aquí está el detalle de cada cuenta.
 
@@ -10,10 +10,10 @@ Los nombres de menús de las consolas web cambian con el tiempo. Si un botón no
 
 | # | Servicio | Para qué lo usa el sistema | Costo | Estado hoy | Sin esto no funciona |
 |---|---|---|---|---|---|
-| 0 | Rama pendiente en GitHub | Los workflows nuevos solo corren desde `main` | — | 78 cambios sin commit | Los pasos 3 a 9 |
-| 1 | Herramientas en la máquina | Aplicar el bootstrap | Gratis | Faltan `gcloud` y `terraform` | El paso 3 |
-| 2 | Cuenta de Google Cloud con facturación | Donde vive todo el sistema | Créditos del curso | No existe | Todo lo de GCP |
-| 3 | Proyecto de GCP y bootstrap | Identidades, bus, evidencia, BigQuery, Cloud Run | Centavos al mes (estimado) | No existe | HU-07, HU-04, HU-06 |
+| 0 | Rama pendiente en GitHub | Los workflows nuevos solo corren desde `main` | — | Ya está en `main` (PR #4) | — |
+| 1 | Herramientas en la máquina | Aplicar el bootstrap | Gratis | Quien ya aplicó las tiene | Volver a aplicar |
+| 2 | Cuenta de Google Cloud con facturación | Donde vive todo el sistema | Prueba gratuita, presupuesto 1000 MXN | La cuenta existe y está en MXN | Todo lo de GCP |
+| 3 | Proyecto de GCP y bootstrap | Identidades, bus, evidencia, BigQuery, Cloud Run | Dentro de ese presupuesto | Aplicado en `eq3-cumplimiento-dev-cc01` | HU-04 y HU-06 todavía esperan `apply-dev` |
 | 4 | Variables y secretos de GitHub | Que el pipeline entre a GCP sin llaves | Gratis | 0 de 6 | Plan real, apply y despliegue |
 | 5 | Colaboradores y tablero de GitHub | Commits de los cuatro, revisión cruzada, tablero | Gratis | Falta que Claudio acepte | Evidencia de actividad |
 | 6 | Slack | Alertas de drift y de presupuesto | Gratis | No existe | HU-05 (aviso en Slack) |
@@ -109,7 +109,8 @@ Llenar en `terraform.tfvars` (este archivo no se sube al repositorio):
 |---|---|
 | `project_id` | El id del paso 3.1 |
 | `billing_account` | El id del paso 2 |
-| `budget_amount_usd` | El tope en dólares. Espera la respuesta a P-13; con un monto bajo se puede empezar y subirlo después |
+| `budget_amount_usd` | El tope, en la moneda de `budget_currency`. El nombre dice usd por historia; el número no tiene que ser en dólares |
+| `budget_currency` | La moneda de la cuenta de facturación. Default `USD`. En esta cuenta es `MXN`: si no coincide, Google responde 400 |
 | `miembros_plataforma` | `["user:correo"]` de quien hará el cambio manual en la demo de drift |
 | `miembros_cumplimiento`, `miembros_auditoria` | Correos de quienes verán el reporte |
 
@@ -118,7 +119,9 @@ terraform init
 terraform apply
 ```
 
-Si falla porque una API recién encendida todavía no responde, se vuelve a correr `terraform apply`. Si falla con un 403 en `google_billing_budget`, falta el permiso del paso 2.
+Si falla porque una API recién encendida todavía no responde, se vuelve a correr `terraform apply`. Si falla con un 403 en `google_billing_budget`, falta el permiso del paso 2. Si falla con 400 en el presupuesto, `budget_currency` no es la moneda de la cuenta de facturación.
+
+Para volver a planear cuando el estado ya está en el bucket, el archivo local `backend_override.tf` (lo ignora `*_override.tf`) y los comandos están en el runbook, sección 3. No se commitea.
 
 ### 3.5 Lo que Terraform crea solo
 
@@ -304,7 +307,7 @@ No son cuentas, pero bloquean decisiones:
 
 | Pregunta | Qué destraba |
 |---|---|
-| P-13 ¿De cuántos créditos disponemos? | El valor de `budget_amount_usd` |
+| P-13 ¿De cuántos créditos disponemos? | El valor de `budget_amount_usd` y la moneda real de la cuenta (`budget_currency`) |
 | P-12 ¿Cuánto se conserva la evidencia? | `evidence_retention_seconds` y si se activa el candado |
 | P-02 ¿Qué marcos son obligatorios además de CIS? | El mapeo de `mappings.yaml` |
 | P-01 ¿El agente solo alerta o también sugiere? | Si se construye HU-10 o HU-11 |

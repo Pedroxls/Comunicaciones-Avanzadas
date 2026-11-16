@@ -6,11 +6,11 @@ Cada cambio de infraestructura entra por Pull Request, se evalúa contra políti
 
 ## Estado
 
-El código de las ocho historias del MVP está escrito y probado sin nube. Nada está desplegado todavía: falta el proyecto de GCP. El orden de los pasos está en [docs/runbooks/puesta-en-marcha.md](docs/runbooks/puesta-en-marcha.md) y cómo se crea cada cuenta, en [docs/servicios-externos.md](docs/servicios-externos.md). El contexto completo del reto y el avance están en [docs/contexto-del-reto.md](docs/contexto-del-reto.md).
+El código de las ocho historias del MVP está escrito. El bootstrap del proyecto de dev ya se aplicó; la red de dev no, porque `apply-dev` todavía no corre. El orden de los pasos está en [docs/runbooks/puesta-en-marcha.md](docs/runbooks/puesta-en-marcha.md) y el detalle de cada cuenta, en [docs/servicios-externos.md](docs/servicios-externos.md). El contexto del reto está en [docs/contexto-del-reto.md](docs/contexto-del-reto.md).
 
 | Historia | En el código | Falta fuera del código |
 |---|---|---|
-| HU-07 Base de GCP y costos | Bootstrap completo: identidades sin llaves, presupuesto, estado remoto, permisos por rol | Crear el proyecto y aplicar |
+| HU-07 Base de GCP y costos | Bootstrap completo: identidades sin llaves, presupuesto, estado remoto, permisos por rol | Cargar las 6 variables de GitHub. Para volver a aplicar, usar `backend_override.tf` |
 | HU-03 Módulo de red | `infra/modules/network` con `terraform test` | Tag `v0.1.0` al cerrar la semana |
 | HU-01 Gate en el PR | El check evalúa el plan real del PR, con o sin GCP; workflow de apply | Proteger `main` |
 | HU-02 Catálogo | 13 controles, 12 políticas Rego, prueba de que catálogo y políticas coinciden | Confirmar 4 referencias CIS |
