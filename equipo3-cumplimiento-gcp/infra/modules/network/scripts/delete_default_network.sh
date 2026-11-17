@@ -11,7 +11,7 @@ if ! command -v gcloud >/dev/null 2>&1; then
   exit 1
 fi
 
-rules=$(gcloud compute firewall-rules list --project="$project" --filter="network:default" --format="value(name)" || true)
+rules=$(gcloud compute firewall-rules list --project="$project" --filter="network:default" --format="value(name)" | tr -d '\r' || true)
 for rule in $rules; do
   gcloud compute firewall-rules delete "$rule" --project="$project" --quiet
 done
