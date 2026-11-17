@@ -13,6 +13,11 @@ github_repository = "Pedroxls/Comunicaciones-Avanzadas"
 # miembros_cumplimiento = []
 # miembros_auditoria    = []
 
+# Retención de la evidencia, en segundos. El default de variables.tf es 86400 (un día)
+# y no se cambia en el repositorio. 30 días, sin candado, solo en este archivo local:
+# evidence_retention_seconds = 2592000
+# lock_evidence_retention queda en false.
+
 # Encender cuando exista lo que cada uno necesita (docs/runbooks/puesta-en-marcha.md).
 # usar_vertex      = true   # después de confirmar la cuota de Vertex AI (R-07)
 # slack_habilitado = true   # después de cargar el token en el secreto slack-bot-token

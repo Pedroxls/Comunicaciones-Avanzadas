@@ -291,15 +291,21 @@ El catálogo tiene cuatro referencias marcadas `ref_cis_por_confirmar`: CTL-IAM-
 
 ## 11. Protección de main
 
-Cuando el check `estatico` ya pase:
+Va en la semana 1, antes de la demo del gate. `estatico` ya pasa. Sin esto, un check rojo no impide el merge.
+
+La corre una persona con admin. No se cambia desde un pull request:
 
 ```bash
 sh equipo3-cumplimiento-gcp/scripts/configurar_github.sh
 ```
 
-Exige PR, una aprobación y los checks `estatico`, `politicas`, `secretos` y `cumplimiento`; deja solo squash y borra la rama al fusionar.
+`enforce_admins` queda en true y hace falta una aprobación. Un PR de la cuenta de Pedro también lo tiene que aprobar otra persona.
 
-Por defecto no exige revisión de CODEOWNERS. Con un solo dueño por ruta, exigirla dejaría sin salida los PR del propio dueño. Para activarla hay que poner al menos dos personas por ruta en `.github/CODEOWNERS` y correr el script con `EXIGIR_CODEOWNERS=true`.
+Con dos personas por ruta en CODEOWNERS:
+
+```bash
+EXIGIR_CODEOWNERS=true sh equipo3-cumplimiento-gcp/scripts/configurar_github.sh
+```
 
 ## 12. Respuestas del socio formador
 
