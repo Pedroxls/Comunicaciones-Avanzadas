@@ -6,17 +6,17 @@ Cada cambio de infraestructura entra por Pull Request, se evalúa contra políti
 
 ## Estado
 
-El código de las ocho historias del MVP está escrito. El bootstrap del proyecto de dev ya se aplicó; la red de dev no, porque `apply-dev` todavía no corre. El orden de los pasos está en [docs/runbooks/puesta-en-marcha.md](docs/runbooks/puesta-en-marcha.md) y el detalle de cada cuenta, en [docs/servicios-externos.md](docs/servicios-externos.md). El contexto del reto está en [docs/contexto-del-reto.md](docs/contexto-del-reto.md).
+El código de las ocho historias del MVP está escrito. En `eq3-cumplimiento-dev-cc01` ya corrieron el bootstrap, `build-images` y `apply-dev`: hay red de dev y los cuatro servicios. `main` exige un pull request, una aprobación y los checks en verde. Faltan Slack, la cuota de Vertex y el reporte de Looker. El orden está en [docs/runbooks/puesta-en-marcha.md](docs/runbooks/puesta-en-marcha.md) y el detalle de cada cuenta, en [docs/servicios-externos.md](docs/servicios-externos.md).
 
 | Historia | En el código | Falta fuera del código |
 |---|---|---|
-| HU-07 Base de GCP y costos | Bootstrap completo: identidades sin llaves, presupuesto, estado remoto, permisos por rol | Cargar las 6 variables de GitHub. Para volver a aplicar, usar `backend_override.tf` |
-| HU-03 Módulo de red | `infra/modules/network` con `terraform test` | Tag `v0.1.0` al cerrar la semana |
-| HU-01 Gate en el PR | El check evalúa el plan real del PR, con o sin GCP; workflow de apply | Proteger `main` |
+| HU-07 Base de GCP y costos | Bootstrap completo: identidades sin llaves, presupuesto, estado remoto, permisos por rol | Hecho. Para volver a aplicar, usar `backend_override.tf` |
+| HU-03 Módulo de red | `infra/modules/network` con `terraform test` | Desplegada con `apply-dev`. Falta el tag `v0.1.0` |
+| HU-01 Gate en el PR | El check evalúa el plan real del PR; `main` está protegido | Hacer el PR de Telnet (CP-01) |
 | HU-02 Catálogo | 13 controles, 12 políticas Rego, prueba de que catálogo y políticas coinciden | Confirmar 4 referencias CIS |
-| HU-04 Drift | Por evento (Audit Logs) y cada hora (`plan -refresh-only`), con las políticas del PR | Aplicar el bootstrap |
-| HU-05 Agente | ADK + Gemini con plantilla de respaldo; alerta a Slack; 30 casos | Cuota de Vertex y app de Slack |
-| HU-06 Evidencia | Cadena de hashes en Cloud Storage e índice en BigQuery; verificador | Aplicar el bootstrap |
+| HU-04 Drift | Por evento (Audit Logs) y cada hora (`plan -refresh-only`), con las políticas del PR | Probar el cambio manual en la consola |
+| HU-05 Agente | Desplegado. Explica con plantilla si no hay Gemini | Cuota de Vertex y app de Slack |
+| HU-06 Evidencia | Servicio desplegado. Cadena de hashes e índice en BigQuery | Probar CP-15 el mismo día que se crea el objeto |
 | HU-08 Reporte | Vistas de BigQuery por marco, ambiente y control | Armar el reporte en Looker Studio |
 
 ## Cómo fluye

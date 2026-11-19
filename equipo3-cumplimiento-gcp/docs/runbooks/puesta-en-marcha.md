@@ -4,7 +4,7 @@ Lo que hay que hacer fuera del código para que el MVP corra en GCP, en orden. C
 
 Este es el orden corto. Cómo se crea cada cuenta (Google Cloud, Slack, Looker Studio, Infracost) está paso a paso en [servicios-externos.md](../servicios-externos.md).
 
-El bootstrap de dev ya está aplicado y su estado vive en el bucket, no en una laptop. La red de ese ambiente todavía no: la crea `apply-dev`. Mientras no estén las variables de GitHub, el check `cumplimiento` planea sin credenciales, como si todo se creara desde cero.
+El bootstrap, las imágenes y la red de dev ya están aplicados. El estado del bootstrap vive en el bucket. `main` exige pull request, una aprobación y los cuatro checks. Slack, Vertex y Looker siguen pendientes.
 
 ## Antes de empezar
 

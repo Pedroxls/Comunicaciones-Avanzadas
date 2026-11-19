@@ -1,6 +1,6 @@
 # Servicios externos: qué falta y cómo se crea cada cosa
 
-Estado al 16 de noviembre de 2026. El código del MVP está en `main`. El bootstrap del proyecto `eq3-cumplimiento-dev-cc01` ya se aplicó y su estado está en `gs://eq3-cumplimiento-dev-cc01-tfstate/bootstrap`. Siguen sin existir las variables de GitHub, la app de Slack, la prueba de cuota de Vertex y el reporte de Looker Studio. La red de dev la crea `apply-dev`, que todavía no corre.
+Estado al 18 de noviembre de 2026. El código del MVP está en `main`. En `eq3-cumplimiento-dev-cc01` ya corrieron el bootstrap, `build-images` y `apply-dev`: hay red de dev y los cuatro servicios. Las seis variables de GitHub Actions están cargadas. No hay secretos de Actions. `main` exige pull request, una aprobación y los checks `estatico`, `politicas`, `secretos` y `cumplimiento`. Siguen sin existir la app de Slack, la prueba de cuota de Vertex y el reporte de Looker Studio.
 
 Este documento lista cada servicio que vive fuera del repositorio, dice para qué se usa y da los pasos para crearlo. El orden corto de ejecución está en [runbooks/puesta-en-marcha.md](runbooks/puesta-en-marcha.md); aquí está el detalle de cada cuenta.
 
@@ -13,15 +13,15 @@ Los nombres de menús de las consolas web cambian con el tiempo. Si un botón no
 | 0 | Rama pendiente en GitHub | Los workflows nuevos solo corren desde `main` | — | Ya está en `main` (PR #4) | — |
 | 1 | Herramientas en la máquina | Aplicar el bootstrap | Gratis | Quien ya aplicó las tiene | Volver a aplicar |
 | 2 | Cuenta de Google Cloud con facturación | Donde vive todo el sistema | Prueba gratuita, presupuesto 1000 MXN | La cuenta existe y está en MXN | Todo lo de GCP |
-| 3 | Proyecto de GCP y bootstrap | Identidades, bus, evidencia, BigQuery, Cloud Run | Dentro de ese presupuesto | Aplicado en `eq3-cumplimiento-dev-cc01` | HU-04 y HU-06 todavía esperan `apply-dev` |
-| 4 | Variables y secretos de GitHub | Que el pipeline entre a GCP sin llaves | Gratis | 0 de 6 | Plan real, apply y despliegue |
+| 3 | Proyecto de GCP, bootstrap y dev | Identidades, bus, evidencia, BigQuery, Cloud Run y la red | Dentro de ese presupuesto | Bootstrap, imágenes y `apply-dev` en verde | Probar drift y la cadena |
+| 4 | Variables y secretos de GitHub | Que el pipeline entre a GCP sin llaves | Gratis | 6 variables. 0 secretos | Nada de este paso |
 | 5 | Colaboradores y tablero de GitHub | Commits de los cuatro, revisión cruzada, tablero | Gratis | Falta que Claudio acepte | Evidencia de actividad |
 | 6 | Slack | Alertas de drift y de presupuesto | Gratis | No existe | HU-05 (aviso en Slack) |
 | 7 | Vertex AI (Gemini) | Que el agente explique con IA | Por uso, centavos | Sin comprobar cuota | HU-05 (explicación con IA) |
 | 8 | Looker Studio | Reporte por marco y exportación a PDF | Gratis | No existe | HU-08 |
 | 9 | Infracost | Costo estimado de cada PR | Gratis | No existe | Nada: es opcional |
 | 10 | Benchmark CIS (PDF) | Confirmar 4 referencias del catálogo | Gratis | Sin descargar | Cerrar HU-02 |
-| 11 | Protección de `main` | Que nadie fusione sin revisión ni checks | Gratis | Sin protección | El criterio de HU-01 |
+| 11 | Protección de `main` | Que nadie fusione sin revisión ni checks | Gratis | Activa: 1 aprobación y 4 checks. También aplica a los admins | Nada |
 | 12 | Respuestas del socio formador | Presupuesto, marcos y retención | — | 5 preguntas abiertas | El monto del presupuesto |
 
 Dependencias: 0 → 1 → 2 → 3 → 4 → primer despliegue. Slack, Vertex, Looker e Infracost se pueden hacer en paralelo después del paso 4. El paso 11 va al final.
@@ -30,12 +30,12 @@ El costo de GCP es una estimación, no una medición: todos los servicios escala
 
 ---
 
-## 0. Subir la rama pendiente
+## 0. Lo que ya corrió
 
-Los workflows `apply-dev` y `build-images`, el gate corregido y el bootstrap completo están en la rama `fix/gate-y-servicios-conectados`, sin commit. GitHub solo ejecuta `gh workflow run` sobre workflows que ya están en `main`.
+`build-images` y `apply-dev` ya terminaron en verde sobre `main` (19 de noviembre de 2026). No hay que volver a subir esa rama.
 
-1. Los seis chequeos de Checkov del piloto (cifrado con llaves propias, registro de accesos en buckets e IPv6) se omiten en `.checkov.yaml`, con el motivo de cada uno. Lo aprueba Seguridad. Cualquier otro hallazgo sigue fallando `estatico`.
-2. Hacer el commit, abrir el PR y fusionarlo con la revisión de otra persona.
+1. Los seis chequeos de Checkov del piloto se omiten en `.checkov.yaml`. Lo aprueba Seguridad.
+2. `main` ya está protegido: un pull request, una aprobación de otra persona y los checks en verde.
 
 ## 1. Herramientas en la máquina de quien aplica
 
