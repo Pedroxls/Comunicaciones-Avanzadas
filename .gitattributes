@@ -1,0 +1,3 @@
+# GitHub Actions y Cloud Run ejecutan los scripts en Linux.
+# En Windows, Git no debe convertirlos a CRLF: gcloud y sh se rompen.
+*.sh text eol=lf
