@@ -1,24 +1,30 @@
-# Quién revisa cada parte. Las rutas salen de la raíz del repositorio.
-# Antes de exigir la revisión de code owners en la protección de main, cada
-# ruta necesita al menos dos personas (ver scripts/configurar_github.sh).
+# Dos personas por ruta: el dueño y su suplente. Nadie revisa solo lo suyo.
+# GitHub usa la última ruta que coincide.
+#
+# Correspondencia usada, con las cuentas que ya están en el repo:
+#   Líder técnico y arquitecto cloud: @Pedroxls
+#   Plataforma y redes:               @Claudio01420
+#   Seguridad y cumplimiento:         @DiegoRoca05
+#   DevSecOps y agente:               @A00837745
+# Si un rol no es esa persona, cámbienlo antes de fusionar.
 
-# Por defecto, cualquier cambio lo revisa el líder del proyecto
-*                     @Pedroxls
+# Líder técnico. Suplente: Plataforma y redes.
+*                     @Pedroxls @Claudio01420
 
-# Políticas, catálogo y omisiones de Checkov: los aprueba Seguridad
-/equipo3-cumplimiento-gcp/policies/            @DiegoRoca05
-/equipo3-cumplimiento-gcp/policies/catalog/    @DiegoRoca05
-/equipo3-cumplimiento-gcp/.checkov.yaml        @DiegoRoca05
+# Plataforma y redes. Suplente: Líder técnico.
+/equipo3-cumplimiento-gcp/infra/modules/network/  @Claudio01420 @Pedroxls
+/equipo3-cumplimiento-gcp/infra/environments/     @Claudio01420 @Pedroxls
+/equipo3-cumplimiento-gcp/sensors/drift/          @Claudio01420 @Pedroxls
 
-# Bootstrap de GCP (estado, identidad del pipeline, presupuesto): el líder
-/equipo3-cumplimiento-gcp/infra/bootstrap/     @Pedroxls
+# Líder técnico. Suplente: Plataforma y redes.
+/equipo3-cumplimiento-gcp/infra/bootstrap/        @Pedroxls @Claudio01420
 
-# Red y drift
-/equipo3-cumplimiento-gcp/infra/modules/network/  @Pedroxls
-/equipo3-cumplimiento-gcp/sensors/drift/          @Pedroxls
+# Seguridad y cumplimiento. Suplente: DevSecOps.
+/equipo3-cumplimiento-gcp/policies/               @DiegoRoca05 @A00837745
+/equipo3-cumplimiento-gcp/policies/catalog/       @DiegoRoca05 @A00837745
+/equipo3-cumplimiento-gcp/.checkov.yaml           @DiegoRoca05 @A00837745
 
-# Agente y sus pruebas
-/equipo3-cumplimiento-gcp/agent/               @A00837745
-
-# Pipeline
-/.github/workflows/   @Pedroxls @A00837745
+# DevSecOps y agente. Suplente: Seguridad.
+/equipo3-cumplimiento-gcp/agent/                  @A00837745 @DiegoRoca05
+/equipo3-cumplimiento-gcp/services/               @A00837745 @DiegoRoca05
+/.github/                                         @A00837745 @DiegoRoca05

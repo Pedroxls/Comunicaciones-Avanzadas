@@ -4,13 +4,13 @@ Lo que hay que hacer fuera del código para que el MVP corra en GCP, en orden. C
 
 Este es el orden corto. Cómo se crea cada cuenta (Google Cloud, Slack, Looker Studio, Infracost) está paso a paso en [servicios-externos.md](../servicios-externos.md).
 
-Hasta el paso 3 nada de esto existe en la nube. Mientras tanto el check `cumplimiento` de cada PR ya evalúa el Terraform real: planea sin credenciales, como si todo se creara desde cero.
+El bootstrap, las imágenes y la red de dev ya están aplicados. El estado del bootstrap vive en el bucket. `main` exige pull request, una aprobación y los cuatro checks. Slack, Vertex y Looker siguen pendientes.
 
 ## Antes de empezar
 
 - `gcloud`, `terraform` 1.9.8 y `gh` instalados.
 - Una cuenta de Google con rol Owner sobre el proyecto y permiso para crear presupuestos en la cuenta de cobro (Billing Account Costs Manager o Administrator). Si el paso 3 falla con un 403 en `google_billing_budget`, falta ese permiso: lo da quien administra la cuenta de cobro del curso.
-- El monto del presupuesto (pregunta P-13).
+- El monto del presupuesto y la moneda de la cuenta de facturación. Tienen que ser la misma: Google rechaza el presupuesto con error 400 si `budget_currency` no coincide con la cuenta. El nombre `budget_amount_usd` es el monto en esa moneda, no obliga a usar dólares.
 
 ## 1. Proyecto y facturación
 
@@ -34,10 +34,12 @@ El resto de las APIs las enciende Terraform.
 
 ```bash
 cd infra/bootstrap
-cp terraform.tfvars.example terraform.tfvars   # llenar project_id, billing_account y budget_amount_usd
+cp terraform.tfvars.example terraform.tfvars   # llenar project_id, billing_account, budget_amount_usd y budget_currency
 terraform init
 terraform apply
 ```
+
+`budget_currency` sale en `USD`. Si la cuenta de facturación es de México, en `terraform.tfvars` va `budget_currency = "MXN"`. La variable está en `variables.tf` a partir del PR de la moneda.
 
 Crea 106 recursos: identidades sin llaves, presupuesto con alertas, buckets de estado y de evidencia, el bus, BigQuery con sus vistas, Artifact Registry, los cuatro servicios de Cloud Run, el job de drift y el sink de Audit Logs. Los servicios nacen con una imagen de muestra; las reales llegan en el paso 5.
 
@@ -49,7 +51,25 @@ Después, borrar la red `default` que GCP crea en todo proyecto nuevo (control C
 sh ../modules/network/scripts/delete_default_network.sh <proyecto>
 ```
 
-El estado del bootstrap queda en tu máquina. Para que no dependa de una sola persona, se puede mover al bucket: agregar un archivo `backend.tf` con `terraform { backend "gcs" { bucket = "<proyecto>-tfstate", prefix = "bootstrap" } }` y correr `terraform init -migrate-state`.
+El estado no se commitea. Para volver a correr el bootstrap cuando ya está en el bucket, crear `infra/bootstrap/backend_override.tf`. El `.gitignore` ignora `*_override.tf`, así que no se sube:
+
+```hcl
+terraform {
+  backend "gcs" {
+    bucket = "<proyecto>-tfstate"
+    prefix = "bootstrap"
+  }
+}
+```
+
+En el proyecto de dev el bucket es `eq3-cumplimiento-dev-cc01-tfstate` y el prefijo es `bootstrap`. Desde `infra/bootstrap`:
+
+```bash
+terraform init
+terraform plan
+```
+
+No hace falta `-migrate-state` si el estado ya se movió. Si todavía está en la laptop, el mismo archivo y `terraform init -migrate-state` lo sube. No crear un `backend.tf` dentro del repositorio: quedaría apuntando a un proyecto real.
 
 ## 4. Variables de GitHub
 
@@ -126,24 +146,51 @@ El acceso lo dan las listas `miembros_cumplimiento` y `miembros_auditoria` de `t
 
 ## 9. Protección de main
 
-Cuando el check `estatico` esté en verde (ver «Decisiones pendientes»):
+Va en la semana 1, antes de cualquier demo del gate. `estatico` ya pasa en `main`. Sin esta protección el botón de merge funciona aunque un check esté en rojo, y CP-01 no demuestra que GitHub impide fusionar.
+
+La corre una persona con admin del repositorio. No se cambia la configuración desde un PR. Desde la raíz del repo:
 
 ```bash
-sh scripts/configurar_github.sh
+sh equipo3-cumplimiento-gcp/scripts/configurar_github.sh
 ```
 
-Exige PR, una aprobación y los cuatro checks; deja solo squash y borra la rama al fusionar. Antes de correrlo, leer la nota del script sobre CODEOWNERS.
+El script pone `enforce_admins` en true y exige una aprobación. Un PR abierto con la cuenta de Pedro también necesita la aprobación de otro integrante: el admin no puede saltarse la regla ni aprobarse solo.
+
+Por defecto no exige CODEOWNERS. Cuando cada ruta tenga dos personas, la misma persona admin corre:
+
+```bash
+EXIGIR_CODEOWNERS=true sh equipo3-cumplimiento-gcp/scripts/configurar_github.sh
+```
 
 ## Cómo comprobar cada caso de la demo
 
+La sección 9 ya tiene que estar aplicada. Si no, un check rojo no impide el merge.
+
 | Caso | Cómo |
 |---|---|
-| CP-01 PR que abre Telnet | Abrir un PR que agregue en `infra/environments/dev` un `google_compute_firewall` con `source_ranges = ["0.0.0.0/0"]` y el puerto 23. El check `cumplimiento` falla con CTL-RED-04 |
+| CP-01 PR que abre Telnet | Abrir un PR que agregue en `infra/environments/dev` un `google_compute_firewall` con `source_ranges = ["0.0.0.0/0"]` y el puerto 23. El check `cumplimiento` falla con CTL-RED-04 y, con `main` protegido, GitHub no deja fusionar |
 | CP-03 PR conforme | El mismo PR corregido pasa y, al fusionar, `apply-dev` lo aplica |
 | CP-08 Drift | En la consola, cambiar el rango de `dev-iap-ssh` a `0.0.0.0/0`. En minutos llega la alerta con CTL-RED-01, quién y cuándo |
 | CP-13 Agente apagado | Borrar la variable `AGENTE_URL` o detener el servicio `agente`: el PR dice «explicación pendiente» y el check sigue fallando |
-| CP-15 Borrar evidencia | `gcloud storage rm gs://<proyecto>-evidencia/cadena/000000000001.json` falla por la retención |
+| CP-15 Borrar evidencia | No borrar `cadena/000000000001.json` si ese objeto ya tiene más de un día: la retención default dura 86400 segundos contados desde que se creó, `gcloud storage rm` sí lo borra y se rompe la cadena desde el primer eslabón. El mismo día de la prueba, crear un registro (una evaluación que escriba evidencia) y borrar solo el objeto más nuevo. Tiene que fallar. Ver abajo cómo encontrarlo |
 | Verificar la cadena | `PYTHONPATH=.:services/evidence python -m evidence verificar <proyecto>-evidencia` (pide `google-cloud-storage` y permiso de lectura sobre el bucket) |
+
+El objeto de CP-15 es el más reciente de ese mismo día:
+
+```bash
+gcloud storage ls -l "gs://<proyecto>-evidencia/cadena/**" | sort -k 2 | tail -1
+```
+
+La última columna es la URL. `gcloud storage rm` de esa URL tiene que fallar por la retención. Si el objeto más nuevo ya cumplió un día, la prueba no sirve: hay que generar otro registro y repetir el `ls`.
+
+Quien corre el bootstrap puede alargar la retención sin activar el candado, solo en su `terraform.tfvars` local (no se sube) y volver a aplicar con `backend_override.tf`:
+
+```hcl
+evidence_retention_seconds = 2592000 # 30 días
+# lock_evidence_retention sigue en false
+```
+
+El default de `variables.tf` no cambia: sigue en un día. Subirlo a 30 días lo decide el equipo y lo aplica quien tiene el proyecto.
 
 ## Decisiones pendientes
 
@@ -151,6 +198,6 @@ Ninguna se resuelve con código hasta que alguien decida.
 
 1. **Checkov del piloto.** Los seis chequeos que no entran en la demo (CKV_GCP_80, 81, 83, 84, 62 y 76) se omiten en `.checkov.yaml`, cada uno con su motivo. No se construye KMS: no apaga el registro de accesos ni IPv6, y recrearía recursos ya aplicados. Cualquier otro chequeo sigue fallando `estatico`. Lo aprueba Seguridad.
 2. **El freno no destruye nada.** Avisa al 50, 90 y 100 %, pero `frenar()` se niega a borrar. Activarlo exige definir qué es un «ambiente temporal»; hoy todo lo desplegado escala a cero y no hay nada que valga la pena destruir.
-3. **Candado de la retención.** `lock_evidence_retention` queda en `false`: activarlo es irreversible (R-06). La retención definitiva espera la respuesta a P-12.
+3. **Candado de la retención.** `lock_evidence_retention` queda en `false`: activarlo es irreversible (R-06). La retención definitiva espera la respuesta a P-12. El default sigue en un día. Subirlo a 30 días, sin candado, es una línea en el `terraform.tfvars` local de quien aplica el bootstrap.
 4. **Referencias CIS por confirmar.** CTL-IAM-01, CTL-IAM-02, CTL-LOG-01 y CTL-STO-01 siguen marcadas `ref_cis_por_confirmar` contra la v5.0.0 del benchmark.
 5. **Preguntas al socio formador:** P-01, P-02, P-04, P-12 y P-13.

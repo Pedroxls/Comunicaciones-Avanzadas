@@ -2,6 +2,8 @@
 project_id        = "cambia-por-el-proyecto-dev"
 billing_account   = "000000-000000-000000"
 budget_amount_usd = 50
+# Misma moneda que la cuenta de facturación. USD es el default de variables.tf.
+# budget_currency = "MXN"
 region            = "us-central1"
 github_repository = "Pedroxls/Comunicaciones-Avanzadas"
 
@@ -10,6 +12,11 @@ github_repository = "Pedroxls/Comunicaciones-Avanzadas"
 # miembros_seguridad    = []
 # miembros_cumplimiento = []
 # miembros_auditoria    = []
+
+# Retención de la evidencia, en segundos. El default de variables.tf es 86400 (un día)
+# y no se cambia en el repositorio. 30 días, sin candado, solo en este archivo local:
+# evidence_retention_seconds = 2592000
+# lock_evidence_retention queda en false.
 
 # Encender cuando exista lo que cada uno necesita (docs/runbooks/puesta-en-marcha.md).
 # usar_vertex      = true   # después de confirmar la cuota de Vertex AI (R-07)

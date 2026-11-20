@@ -138,3 +138,9 @@ variable "miembros_auditoria" {
   type        = list(string)
   default     = []
 }
+
+variable "budget_currency" {
+  description = "Moneda del presupuesto. Debe ser la misma que la de la cuenta de facturación."
+  type        = string
+  default     = "USD"
+}
