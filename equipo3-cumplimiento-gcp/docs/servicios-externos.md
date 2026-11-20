@@ -1,6 +1,6 @@
 # Servicios externos: qué falta y cómo se crea cada cosa
 
-Estado al 15 de noviembre de 2026. Todo el código del MVP está escrito y probado en la rama `fix/gate-y-servicios-conectados`, pero **ningún servicio externo existe todavía**: no hay proyecto de GCP, GitHub tiene 0 variables y 0 secretos, no hay app de Slack ni reporte en Looker Studio.
+Estado al 18 de noviembre de 2026. El código del MVP está en `main`. En `eq3-cumplimiento-dev-cc01` ya corrieron el bootstrap, `build-images` y `apply-dev`: hay red de dev y los cuatro servicios. Las seis variables de GitHub Actions están cargadas. No hay secretos de Actions. `main` exige pull request, una aprobación y los checks `estatico`, `politicas`, `secretos` y `cumplimiento`. Siguen sin existir la app de Slack, la prueba de cuota de Vertex y el reporte de Looker Studio.
 
 Este documento lista cada servicio que vive fuera del repositorio, dice para qué se usa y da los pasos para crearlo. El orden corto de ejecución está en [runbooks/puesta-en-marcha.md](runbooks/puesta-en-marcha.md); aquí está el detalle de cada cuenta.
 
@@ -10,18 +10,18 @@ Los nombres de menús de las consolas web cambian con el tiempo. Si un botón no
 
 | # | Servicio | Para qué lo usa el sistema | Costo | Estado hoy | Sin esto no funciona |
 |---|---|---|---|---|---|
-| 0 | Rama pendiente en GitHub | Los workflows nuevos solo corren desde `main` | — | 78 cambios sin commit | Los pasos 3 a 9 |
-| 1 | Herramientas en la máquina | Aplicar el bootstrap | Gratis | Faltan `gcloud` y `terraform` | El paso 3 |
-| 2 | Cuenta de Google Cloud con facturación | Donde vive todo el sistema | Créditos del curso | No existe | Todo lo de GCP |
-| 3 | Proyecto de GCP y bootstrap | Identidades, bus, evidencia, BigQuery, Cloud Run | Centavos al mes (estimado) | No existe | HU-07, HU-04, HU-06 |
-| 4 | Variables y secretos de GitHub | Que el pipeline entre a GCP sin llaves | Gratis | 0 de 6 | Plan real, apply y despliegue |
+| 0 | Rama pendiente en GitHub | Los workflows nuevos solo corren desde `main` | — | Ya está en `main` (PR #4) | — |
+| 1 | Herramientas en la máquina | Aplicar el bootstrap | Gratis | Quien ya aplicó las tiene | Volver a aplicar |
+| 2 | Cuenta de Google Cloud con facturación | Donde vive todo el sistema | Prueba gratuita, presupuesto 1000 MXN | La cuenta existe y está en MXN | Todo lo de GCP |
+| 3 | Proyecto de GCP, bootstrap y dev | Identidades, bus, evidencia, BigQuery, Cloud Run y la red | Dentro de ese presupuesto | Bootstrap, imágenes y `apply-dev` en verde | Probar drift y la cadena |
+| 4 | Variables y secretos de GitHub | Que el pipeline entre a GCP sin llaves | Gratis | 6 variables. 0 secretos | Nada de este paso |
 | 5 | Colaboradores y tablero de GitHub | Commits de los cuatro, revisión cruzada, tablero | Gratis | Falta que Claudio acepte | Evidencia de actividad |
 | 6 | Slack | Alertas de drift y de presupuesto | Gratis | No existe | HU-05 (aviso en Slack) |
 | 7 | Vertex AI (Gemini) | Que el agente explique con IA | Por uso, centavos | Sin comprobar cuota | HU-05 (explicación con IA) |
 | 8 | Looker Studio | Reporte por marco y exportación a PDF | Gratis | No existe | HU-08 |
 | 9 | Infracost | Costo estimado de cada PR | Gratis | No existe | Nada: es opcional |
 | 10 | Benchmark CIS (PDF) | Confirmar 4 referencias del catálogo | Gratis | Sin descargar | Cerrar HU-02 |
-| 11 | Protección de `main` | Que nadie fusione sin revisión ni checks | Gratis | Sin protección | El criterio de HU-01 |
+| 11 | Protección de `main` | Que nadie fusione sin revisión ni checks | Gratis | Activa: 1 aprobación y 4 checks. También aplica a los admins | Nada |
 | 12 | Respuestas del socio formador | Presupuesto, marcos y retención | — | 5 preguntas abiertas | El monto del presupuesto |
 
 Dependencias: 0 → 1 → 2 → 3 → 4 → primer despliegue. Slack, Vertex, Looker e Infracost se pueden hacer en paralelo después del paso 4. El paso 11 va al final.
@@ -30,12 +30,12 @@ El costo de GCP es una estimación, no una medición: todos los servicios escala
 
 ---
 
-## 0. Subir la rama pendiente
+## 0. Lo que ya corrió
 
-Los workflows `apply-dev` y `build-images`, el gate corregido y el bootstrap completo están en la rama `fix/gate-y-servicios-conectados`, sin commit. GitHub solo ejecuta `gh workflow run` sobre workflows que ya están en `main`.
+`build-images` y `apply-dev` ya terminaron en verde sobre `main` (19 de noviembre de 2026). No hay que volver a subir esa rama.
 
-1. Los seis chequeos de Checkov del piloto (cifrado con llaves propias, registro de accesos en buckets e IPv6) se omiten en `.checkov.yaml`, con el motivo de cada uno. Lo aprueba Seguridad. Cualquier otro hallazgo sigue fallando `estatico`.
-2. Hacer el commit, abrir el PR y fusionarlo con la revisión de otra persona.
+1. Los seis chequeos de Checkov del piloto se omiten en `.checkov.yaml`. Lo aprueba Seguridad.
+2. `main` ya está protegido: un pull request, una aprobación de otra persona y los checks en verde.
 
 ## 1. Herramientas en la máquina de quien aplica
 
@@ -109,7 +109,8 @@ Llenar en `terraform.tfvars` (este archivo no se sube al repositorio):
 |---|---|
 | `project_id` | El id del paso 3.1 |
 | `billing_account` | El id del paso 2 |
-| `budget_amount_usd` | El tope en dólares. Espera la respuesta a P-13; con un monto bajo se puede empezar y subirlo después |
+| `budget_amount_usd` | El tope, en la moneda de `budget_currency`. El nombre dice usd por historia; el número no tiene que ser en dólares |
+| `budget_currency` | La moneda de la cuenta de facturación. Default `USD`. En esta cuenta es `MXN`: si no coincide, Google responde 400 |
 | `miembros_plataforma` | `["user:correo"]` de quien hará el cambio manual en la demo de drift |
 | `miembros_cumplimiento`, `miembros_auditoria` | Correos de quienes verán el reporte |
 
@@ -118,7 +119,9 @@ terraform init
 terraform apply
 ```
 
-Si falla porque una API recién encendida todavía no responde, se vuelve a correr `terraform apply`. Si falla con un 403 en `google_billing_budget`, falta el permiso del paso 2.
+Si falla porque una API recién encendida todavía no responde, se vuelve a correr `terraform apply`. Si falla con un 403 en `google_billing_budget`, falta el permiso del paso 2. Si falla con 400 en el presupuesto, `budget_currency` no es la moneda de la cuenta de facturación.
+
+Para volver a planear cuando el estado ya está en el bucket, el archivo local `backend_override.tf` (lo ignora `*_override.tf`) y los comandos están en el runbook, sección 3. No se commitea.
 
 ### 3.5 Lo que Terraform crea solo
 
@@ -288,15 +291,21 @@ El catálogo tiene cuatro referencias marcadas `ref_cis_por_confirmar`: CTL-IAM-
 
 ## 11. Protección de main
 
-Cuando el check `estatico` ya pase:
+Va en la semana 1, antes de la demo del gate. `estatico` ya pasa. Sin esto, un check rojo no impide el merge.
+
+La corre una persona con admin. No se cambia desde un pull request:
 
 ```bash
 sh equipo3-cumplimiento-gcp/scripts/configurar_github.sh
 ```
 
-Exige PR, una aprobación y los checks `estatico`, `politicas`, `secretos` y `cumplimiento`; deja solo squash y borra la rama al fusionar.
+`enforce_admins` queda en true y hace falta una aprobación. Un PR de la cuenta de Pedro también lo tiene que aprobar otra persona.
 
-Por defecto no exige revisión de CODEOWNERS. Con un solo dueño por ruta, exigirla dejaría sin salida los PR del propio dueño. Para activarla hay que poner al menos dos personas por ruta en `.github/CODEOWNERS` y correr el script con `EXIGIR_CODEOWNERS=true`.
+Con dos personas por ruta en CODEOWNERS:
+
+```bash
+EXIGIR_CODEOWNERS=true sh equipo3-cumplimiento-gcp/scripts/configurar_github.sh
+```
 
 ## 12. Respuestas del socio formador
 
@@ -304,7 +313,7 @@ No son cuentas, pero bloquean decisiones:
 
 | Pregunta | Qué destraba |
 |---|---|
-| P-13 ¿De cuántos créditos disponemos? | El valor de `budget_amount_usd` |
+| P-13 ¿De cuántos créditos disponemos? | El valor de `budget_amount_usd` y la moneda real de la cuenta (`budget_currency`) |
 | P-12 ¿Cuánto se conserva la evidencia? | `evidence_retention_seconds` y si se activa el candado |
 | P-02 ¿Qué marcos son obligatorios además de CIS? | El mapeo de `mappings.yaml` |
 | P-01 ¿El agente solo alerta o también sugiere? | Si se construye HU-10 o HU-11 |
