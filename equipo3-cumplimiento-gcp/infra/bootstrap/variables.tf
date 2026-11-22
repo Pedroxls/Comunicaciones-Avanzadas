@@ -98,9 +98,9 @@ variable "gemini_model" {
 }
 
 variable "vertex_location" {
-  description = "Ubicación de Vertex AI."
+  description = "Ubicación de Gemini en Vertex AI. gemini-3.8-flash no está en us-central1: solo en global y en las multirregiones us y eu. us deja el procesamiento en Estados Unidos. Si us no responde, el respaldo es global."
   type        = string
-  default     = "us-central1"
+  default     = "us"
 }
 
 variable "slack_habilitado" {

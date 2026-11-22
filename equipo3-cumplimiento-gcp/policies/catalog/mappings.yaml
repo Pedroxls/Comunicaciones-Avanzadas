@@ -65,20 +65,20 @@ mapeos:
 
   - control_id: CTL-IAM-01
     marco_id: CIS_GCP
-    requisito: "1.4"
-    nota: Por confirmar contra la v5.0.0 (HU-02)
+    requisito: "1.5"
+    nota: v5.0.0, 1.5 solo permite llaves de cuenta de servicio administradas por GCP. 1.4 en esa versión es la llave de seguridad del administrador.
 
   - control_id: CTL-IAM-02
     marco_id: CIS_GCP
-    requisito: "1.5"
-    nota: Por confirmar contra la v5.0.0 (HU-02)
+    requisito: "1.6"
+    nota: v5.0.0, 1.6 la cuenta de servicio no tiene privilegios de administrador.
 
   - control_id: CTL-LOG-01
     marco_id: CIS_GCP
     requisito: "2.1"
-    nota: Por confirmar contra la v5.0.0 (HU-02)
+    nota: v5.0.0, 2.1 configura Cloud Audit Logs, incluidos los de acceso a datos.
 
   - control_id: CTL-STO-01
     marco_id: CIS_GCP
     requisito: "5.1"
-    nota: Por confirmar contra la v5.0.0 (HU-02)
+    nota: v5.0.0, 5.1 el bucket no es anónimo ni público.
