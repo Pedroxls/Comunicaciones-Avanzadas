@@ -31,6 +31,7 @@ resource "google_compute_firewall" "iap_ssh" {
   network       = google_compute_network.vpc.name
   direction     = "INGRESS"
   source_ranges = [local.iap_cidr]
+  description   = "SSH solo desde el proxy IAP de Google (35.235.240.0/20)"
 
   allow {
     protocol = "tcp"
