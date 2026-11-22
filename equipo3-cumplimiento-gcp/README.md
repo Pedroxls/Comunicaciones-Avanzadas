@@ -6,7 +6,7 @@ Cada cambio de infraestructura entra por Pull Request, se evalúa contra políti
 
 ## Estado
 
-El código de las ocho historias del MVP está escrito. En `eq3-cumplimiento-dev-cc01` ya corrieron el bootstrap, `build-images` y `apply-dev`: hay red de dev y los cuatro servicios. `main` exige un pull request, una aprobación y los checks en verde. Faltan Slack, la corrida de los 30 casos contra Gemini y el reporte de Looker. El orden está en [docs/runbooks/puesta-en-marcha.md](docs/runbooks/puesta-en-marcha.md) y el detalle de cada cuenta, en [docs/servicios-externos.md](docs/servicios-externos.md).
+El código de las ocho historias del MVP está escrito. En `eq3-cumplimiento-dev-cc01` ya corrieron el bootstrap, `build-images` y `apply-dev`: hay red de dev y los cuatro servicios. `main` exige un pull request, una aprobación y los checks en verde. El 22 de noviembre Gemini en `us` y Slack ya respondieron. Falta el reporte de Looker. El orden está en [docs/runbooks/puesta-en-marcha.md](docs/runbooks/puesta-en-marcha.md) y el detalle de cada cuenta, en [docs/servicios-externos.md](docs/servicios-externos.md).
 
 | Historia | En el código | Falta fuera del código |
 |---|---|---|
@@ -14,9 +14,9 @@ El código de las ocho historias del MVP está escrito. En `eq3-cumplimiento-dev
 | HU-03 Módulo de red | `infra/modules/network` con `terraform test` | Hecho. Desplegada con `apply-dev` y publicada con el tag git `v0.1` |
 | HU-01 Gate en el PR | El check evalúa el plan real del PR; `main` está protegido | Hecho. CP-01 bloqueó Telnet el 19 de noviembre y CP-03 aplicó la regla corregida el 21. La regla de prueba sale del código en este cambio |
 | HU-02 Catálogo | 13 controles, 12 políticas Rego, prueba de que catálogo y políticas coinciden | Referencias contrastadas con la v5.0.0. IAM quedó en 1.5 y 1.6; logs en 2.1; storage en 5.1 |
-| HU-04 Drift | Por evento (Audit Logs) y cada hora (`plan -refresh-only`), con las políticas del PR | Probar el cambio manual en la consola |
-| HU-05 Agente | Desplegado. Explica con plantilla si no hay Gemini | Correr los 30 casos contra Gemini en `us` y crear la app de Slack |
-| HU-06 Evidencia | Servicio desplegado. Cadena de hashes e índice en BigQuery | Probar CP-15 el mismo día que se crea el objeto |
+| HU-04 Drift | Por evento (Audit Logs) y cada hora (`plan -refresh-only`), con las políticas del PR | Hecho el 22 de noviembre. `dev-iap-ssh` pasó a `0.0.0.0/0` a las 08:04:00Z y volvió a `35.235.240.0/20` a las 08:04:43Z. BigQuery registró CTL-RED-01 a las 08:04:13Z |
+| HU-05 Agente | Desplegado. Explica con Gemini en `us` y avisa en `#cumplimiento-alertas` | Hecho el 22 de noviembre. Los 30 casos salieron `fuentes.vertex` 30 y `proporcion_fallidos` 0.0 |
+| HU-06 Evidencia | Servicio desplegado. Cadena de hashes e índice en BigQuery | Demostrado el 22 de noviembre. Ocultar la versión visible deja un hueco que el verificador detecta; la generación original se restaura. Borrarla de verdad falla con 403. La cadena quedó íntegra: 176 eslabones |
 | HU-08 Reporte | Vistas de BigQuery por marco, ambiente y control | Armar el reporte en Looker Studio |
 
 ## Cómo fluye
