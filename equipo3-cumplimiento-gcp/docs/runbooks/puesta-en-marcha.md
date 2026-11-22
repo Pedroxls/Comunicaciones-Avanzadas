@@ -4,7 +4,7 @@ Lo que hay que hacer fuera del código para que el MVP corra en GCP, en orden. C
 
 Este es el orden corto. Cómo se crea cada cuenta (Google Cloud, Slack, Looker Studio, Infracost) está paso a paso en [servicios-externos.md](../servicios-externos.md).
 
-El bootstrap, las imágenes y la red de dev ya están aplicados. El estado del bootstrap vive en el bucket. `main` exige pull request, una aprobación y los cuatro checks. Slack, Vertex y Looker siguen pendientes.
+El bootstrap, las imágenes y la red de dev ya están aplicados. El estado del bootstrap vive en el bucket. `main` exige pull request, una aprobación y los cuatro checks. El 22 de noviembre Gemini en `us` y Slack ya funcionan. Looker sigue pendiente.
 
 ## Antes de empezar
 
@@ -173,9 +173,9 @@ La sección 9 ya tiene que estar aplicada. Si no, un check rojo no impide el mer
 |---|---|
 | CP-01 PR que abre Telnet | Abrir un PR que agregue en `infra/environments/dev` un `google_compute_firewall` con `source_ranges = ["0.0.0.0/0"]` y el puerto 23. El check `cumplimiento` falla con CTL-RED-04 y, con `main` protegido, GitHub no deja fusionar |
 | CP-03 PR conforme | El mismo PR corregido pasa y, al fusionar, `apply-dev` lo aplica. El 21 de noviembre creó `dev-demo-https-interna`. Esa regla de prueba se quita del código: al fusionar el cambio, `apply-dev` la borra |
-| CP-08 Drift | En la consola, cambiar el rango de `dev-iap-ssh` a `0.0.0.0/0`. En minutos llega la alerta con CTL-RED-01, quién y cuándo |
+| CP-08 Drift | En la consola, cambiar el rango de `dev-iap-ssh` a `0.0.0.0/0`. En minutos llega la alerta con CTL-RED-01, quién y cuándo. Hecho el 22 de noviembre: el cambio fue a las 08:04:00Z, BigQuery lo registró a las 08:04:13Z con el actor `pedroalejandrordz047@gmail.com`, y la regla volvió a `35.235.240.0/20` a las 08:04:43Z |
 | CP-13 Agente apagado | Borrar la variable `AGENTE_URL` o detener el servicio `agente`: el PR dice «explicación pendiente» y el check sigue fallando |
-| CP-15 Borrar evidencia | No borrar `cadena/000000000001.json` si ese objeto ya tiene más de un día: la retención default dura 86400 segundos contados desde que se creó, `gcloud storage rm` sí lo borra y se rompe la cadena desde el primer eslabón. El mismo día de la prueba, crear un registro (una evaluación que escriba evidencia) y borrar solo el objeto más nuevo. Tiene que fallar. Ver abajo cómo encontrarlo |
+| CP-15 Borrar evidencia | No borrar `cadena/000000000001.json` si ese objeto ya tiene más de un día: la retención default dura 86400 segundos contados desde que se creó, `gcloud storage rm` sí lo borra y se rompe la cadena desde el primer eslabón. El mismo día de la prueba, crear un registro (una evaluación que escriba evidencia) y borrar solo el objeto más nuevo. Tiene que fallar. El 22 de noviembre no falló: se borró `cadena/000000000170.json`, creado a las 08:01:07Z, y el eslabón 171 no apunta al 169 |
 | Verificar la cadena | `PYTHONPATH=.:services/evidence python -m evidence verificar <proyecto>-evidencia` (pide `google-cloud-storage` y permiso de lectura sobre el bucket) |
 
 El objeto de CP-15 es el más reciente de ese mismo día:
