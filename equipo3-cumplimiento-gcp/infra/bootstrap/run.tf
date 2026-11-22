@@ -104,8 +104,9 @@ resource "google_cloud_run_v2_service" "agente" {
   }
 
   lifecycle {
-    # scaling: el plan lo muestra de 0 a null en cada corrida y no cambia el servicio.
-    ignore_changes = [template[0].containers[0].image, template[0].scaling, client, client_version]
+    # scaling del servicio (manual_instance_count): el plan lo muestra de 0 a null.
+    # No ignorar template.scaling: ahí vive max_instance_count.
+    ignore_changes = [template[0].containers[0].image, scaling, client, client_version]
   }
 
   depends_on = [google_project_service.apis, google_secret_manager_secret_iam_member.agente_lee_slack]
@@ -143,8 +144,9 @@ resource "google_cloud_run_v2_service" "evidencia" {
   }
 
   lifecycle {
-    # scaling: el plan lo muestra de 0 a null en cada corrida y no cambia el servicio.
-    ignore_changes = [template[0].containers[0].image, template[0].scaling, client, client_version]
+    # scaling del servicio (manual_instance_count): el plan lo muestra de 0 a null.
+    # No ignorar template.scaling: ahí vive max_instance_count.
+    ignore_changes = [template[0].containers[0].image, scaling, client, client_version]
   }
 
   depends_on = [google_project_service.apis]
@@ -181,8 +183,9 @@ resource "google_cloud_run_v2_service" "drift" {
   }
 
   lifecycle {
-    # scaling: el plan lo muestra de 0 a null en cada corrida y no cambia el servicio.
-    ignore_changes = [template[0].containers[0].image, template[0].scaling, client, client_version]
+    # scaling del servicio (manual_instance_count): el plan lo muestra de 0 a null.
+    # No ignorar template.scaling: ahí vive max_instance_count.
+    ignore_changes = [template[0].containers[0].image, scaling, client, client_version]
   }
 
   depends_on = [google_project_service.apis]
@@ -219,8 +222,9 @@ resource "google_cloud_run_v2_service" "freno" {
   }
 
   lifecycle {
-    # scaling: el plan lo muestra de 0 a null en cada corrida y no cambia el servicio.
-    ignore_changes = [template[0].containers[0].image, template[0].scaling, client, client_version]
+    # scaling del servicio (manual_instance_count): el plan lo muestra de 0 a null.
+    # No ignorar template.scaling: ahí vive max_instance_count.
+    ignore_changes = [template[0].containers[0].image, scaling, client, client_version]
   }
 
   depends_on = [google_project_service.apis]
