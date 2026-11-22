@@ -11,7 +11,7 @@ El código de las ocho historias del MVP está escrito. En `eq3-cumplimiento-dev
 | Historia | En el código | Falta fuera del código |
 |---|---|---|
 | HU-07 Base de GCP y costos | Bootstrap completo: identidades sin llaves, presupuesto, estado remoto, permisos por rol | Hecho. Para volver a aplicar, usar `backend_override.tf` |
-| HU-03 Módulo de red | `infra/modules/network` con `terraform test` | Desplegada con `apply-dev`. Falta publicar el tag git `v0.1` |
+| HU-03 Módulo de red | `infra/modules/network` con `terraform test` | Hecho. Desplegada con `apply-dev` y publicada con el tag git `v0.1` |
 | HU-01 Gate en el PR | El check evalúa el plan real del PR; `main` está protegido | Hecho. CP-01 bloqueó Telnet el 19 de noviembre y CP-03 aplicó la regla corregida el 21. La regla de prueba sale del código en este cambio |
 | HU-02 Catálogo | 13 controles, 12 políticas Rego, prueba de que catálogo y políticas coinciden | Referencias contrastadas con la v5.0.0. IAM quedó en 1.5 y 1.6; logs en 2.1; storage en 5.1 |
 | HU-04 Drift | Por evento (Audit Logs) y cada hora (`plan -refresh-only`), con las políticas del PR | Probar el cambio manual en la consola |

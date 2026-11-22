@@ -24,7 +24,7 @@ module "network" {
 
 `manage_default_network` sale en `false`. En `true`, al aplicar corre `scripts/delete_default_network.sh` y borra la red `default` del proyecto si todavía existe. Hace falta `gcloud` con permiso para borrar esa red. Un plan normal no la toca.
 
-La versión de este módulo para la semana 3 es v0.1.0. El tag git `v0.1` se pone al cerrar la semana, cuando el pipeline ya entra a GCP sin llaves.
+La versión de este módulo para la semana 3 es v0.1.0. El tag git `v0.1` ya está publicado. Apunta al commit en el que el pipeline ya entra a GCP sin llaves y la red de dev está desplegada.
 
 ## Prueba
 
