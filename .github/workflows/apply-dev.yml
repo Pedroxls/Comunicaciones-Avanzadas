@@ -95,3 +95,9 @@ jobs:
         run: |
           echo "${PLAN_SHA256}  tfplan" | sha256sum --check
           terraform apply -input=false tfplan
+
+      # El plan horario es refresh-only y no guarda el estado. Sin este paso,
+      # los campos que Google normaliza al crear se ven como drift cada hora.
+      - name: Guardar en el estado lo que Google normalizó
+        working-directory: equipo3-cumplimiento-gcp/infra/environments/dev
+        run: terraform apply -refresh-only -auto-approve -input=false

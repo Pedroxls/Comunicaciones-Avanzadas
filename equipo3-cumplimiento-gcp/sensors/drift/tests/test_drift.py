@@ -202,11 +202,47 @@ PLAN_CON_DRIFT = {
 
 def test_el_drift_del_plan_pasa_a_resource_changes():
     assert recursos_cambiados(PLAN_CON_DRIFT) == [
-        {"address": "module.network.google_compute_firewall.iap_ssh", "type": "google_compute_firewall", "borrado": False},
-        {"address": "module.network.google_compute_firewall.interna_https", "type": "google_compute_firewall", "borrado": True},
+        {
+            "address": "module.network.google_compute_firewall.iap_ssh",
+            "type": "google_compute_firewall",
+            "borrado": False,
+            "atributos": ["allow", "source_ranges"],
+        },
+        {
+            "address": "module.network.google_compute_firewall.interna_https",
+            "type": "google_compute_firewall",
+            "borrado": True,
+            "atributos": [],
+        },
     ]
     drift = plan_de_drift(PLAN_CON_DRIFT)
     assert [rc["address"] for rc in drift["resource_changes"]] == ["module.network.google_compute_firewall.iap_ssh"]
+
+
+def test_los_campos_calculados_no_cuentan_como_cambio_manual():
+    plan = {
+        "resource_drift": [
+            {
+                "address": "module.network.google_compute_firewall.iap_ssh",
+                "type": "google_compute_firewall",
+                "change": {
+                    "actions": ["update"],
+                    "before": {"name": "dev-iap-ssh", "source_ranges": ["35.235.240.0/20"]},
+                    "after": {
+                        "name": "dev-iap-ssh",
+                        "id": "projects/dev/firewalls/dev-iap-ssh",
+                        "self_link": "https://www.googleapis.com/compute/v1/firewalls/dev-iap-ssh",
+                        "direction": "INGRESS",
+                        "disabled": False,
+                        "deny": [],
+                        "source_ranges": ["35.235.240.0/20"],
+                    },
+                },
+            }
+        ]
+    }
+    assert recursos_cambiados(plan) == []
+    assert plan_de_drift(plan)["resource_changes"] == []
 
 
 def test_la_verificacion_horaria_evalua_el_drift_con_las_politicas_del_pr(politicas_reales):
@@ -217,6 +253,9 @@ def test_la_verificacion_horaria_evalua_el_drift_con_las_politicas_del_pr(politi
         por_control.setdefault(h["control_id"], []).append(h["recurso"])
     assert por_control["CTL-RED-01"] == ["module.network.google_compute_firewall.iap_ssh"]
     assert len(por_control["CTL-GOB-01"]) == 2
+    detalles = [h["detalle"] for h in evento["hallazgos"] if h["control_id"] == "CTL-GOB-01"]
+    assert "Cambiado fuera de Terraform: allow, source_ranges" in detalles
+    assert "Borrado fuera de Terraform" in detalles
 
 
 def test_sin_cambios_la_verificacion_horaria_no_genera_hallazgos():

@@ -52,12 +52,15 @@ def plan_refresh_only(directorio: Path, bucket: str, prefijo: str, proyecto: str
         raise NoEvaluado("terraform show no devolvió JSON") from exc
 
 
+def _detalle(cambiado: dict) -> str:
+    if cambiado["borrado"]:
+        return "Borrado fuera de Terraform"
+    return "Cambiado fuera de Terraform: " + ", ".join(cambiado["atributos"])
+
+
 def evento_de_plan(plan: dict, evaluar, ambiente: str = "dev") -> dict:
     hallazgos = [
-        hallazgo_de_cambio_manual(
-            cambiado["address"],
-            "Borrado fuera de Terraform" if cambiado["borrado"] else "Cambiado fuera de Terraform",
-        )
+        hallazgo_de_cambio_manual(cambiado["address"], _detalle(cambiado))
         for cambiado in recursos_cambiados(plan)
     ]
     drift = plan_de_drift(plan)
