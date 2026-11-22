@@ -175,16 +175,19 @@ La sección 9 ya tiene que estar aplicada. Si no, un check rojo no impide el mer
 | CP-03 PR conforme | El mismo PR corregido pasa y, al fusionar, `apply-dev` lo aplica. El 21 de noviembre creó `dev-demo-https-interna`. Esa regla de prueba se quita del código: al fusionar el cambio, `apply-dev` la borra |
 | CP-08 Drift | En la consola, cambiar el rango de `dev-iap-ssh` a `0.0.0.0/0`. En minutos llega la alerta con CTL-RED-01, quién y cuándo. Hecho el 22 de noviembre: el cambio fue a las 08:04:00Z, BigQuery lo registró a las 08:04:13Z con el actor `pedroalejandrordz047@gmail.com`, y la regla volvió a `35.235.240.0/20` a las 08:04:43Z |
 | CP-13 Agente apagado | Borrar la variable `AGENTE_URL` o detener el servicio `agente`: el PR dice «explicación pendiente» y el check sigue fallando |
-| CP-15 Borrar evidencia | No borrar `cadena/000000000001.json` si ese objeto ya tiene más de un día: la retención default dura 86400 segundos contados desde que se creó, `gcloud storage rm` sí lo borra y se rompe la cadena desde el primer eslabón. El mismo día de la prueba, crear un registro (una evaluación que escriba evidencia) y borrar solo el objeto más nuevo. Tiene que fallar. El 22 de noviembre no falló: se borró `cadena/000000000170.json`, creado a las 08:01:07Z, y el eslabón 171 no apunta al 169 |
+| CP-15 Borrar evidencia | Dos pasos. `gcloud storage rm` de la URL visible puede ocultar el eslabón: el verificador marca el hueco, la generación original sigue por la retención y se restaura. Borrar esa generación, con `#` en la URL, tiene que fallar con 403. El 22 de noviembre pasó así con `cadena/000000000170.json`: la cadena restaurada cerró en 176 eslabones y el `rm` de la generación `1795335325360589` devolvió HTTP 403 hasta el 23 de noviembre a las 08:15:25Z |
 | Verificar la cadena | `PYTHONPATH=.:services/evidence python -m evidence verificar <proyecto>-evidencia` (pide `google-cloud-storage` y permiso de lectura sobre el bucket) |
 
-El objeto de CP-15 es el más reciente de ese mismo día:
+El objeto de CP-15 es el más reciente de ese mismo día. La URL tiene que incluir la generación, si no `rm` solo oculta la versión visible y deja el eslabón recuperable:
 
 ```bash
-gcloud storage ls -l "gs://<proyecto>-evidencia/cadena/**" | sort -k 2 | tail -1
+gcloud storage ls -a -l "gs://<proyecto>-evidencia/cadena/**" | sort -k 2 | tail -1
+gcloud storage rm "<URL completa con #generación>"
 ```
 
-La última columna es la URL. `gcloud storage rm` de esa URL tiene que fallar por la retención. Si el objeto más nuevo ya cumplió un día, la prueba no sirve: hay que generar otro registro y repetir el `ls`.
+Tiene que fallar con HTTP 403 (`retentionPolicyNotMet`): el objeto está sujeto a la retención y no se puede borrar ni sobrescribir. Si el objeto más nuevo ya cumplió un día, la prueba no sirve: hay que generar otro registro y repetir el `ls`.
+
+Comprobar la cadena después, con el comando de la tabla. `integra` tiene que salir en `true`. Si alguien borró la versión visible, el verificador marca el hueco y la generación original se restaura desde `gcloud storage ls -a`.
 
 Quien corre el bootstrap puede alargar la retención sin activar el candado, solo en su `terraform.tfvars` local (no se sube) y volver a aplicar con `backend_override.tf`:
 
