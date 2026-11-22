@@ -1,7 +1,7 @@
 # Catálogo de controles del MVP (tabla 4.1 del documento de diseño).
 # Severidad: critica y alta bloquean el merge (deny); media y baja solo se reportan (warn).
 # ref_cis: numeración del CIS Google Cloud Platform Foundation Benchmark v5.0.0.
-# ref_cis_por_confirmar: true = número tomado de versiones anteriores; se confirma en HU-02.
+# ref_cis_por_confirmar: true = el número todavía no se contrastó con el texto de la v5.0.0.
 
 controles:
   - control_id: CTL-RED-01
@@ -64,8 +64,7 @@ controles:
     severidad: alta
     bloquea: true
     tipo_recurso: google_service_account_key
-    ref_cis: "1.4"
-    ref_cis_por_confirmar: true
+    ref_cis: "1.5"
     semana: 4
 
   - control_id: CTL-IAM-02
@@ -74,8 +73,7 @@ controles:
     severidad: alta
     bloquea: true
     tipo_recurso: google_project_iam_member
-    ref_cis: "1.5"
-    ref_cis_por_confirmar: true
+    ref_cis: "1.6"
     semana: 4
 
   - control_id: CTL-LOG-01
@@ -85,7 +83,6 @@ controles:
     bloquea: false
     tipo_recurso: google_project_iam_audit_config
     ref_cis: "2.1"
-    ref_cis_por_confirmar: true
     semana: 4
 
   - control_id: CTL-STO-01
@@ -95,7 +92,6 @@ controles:
     bloquea: true
     tipo_recurso: google_storage_bucket_iam_member
     ref_cis: "5.1"
-    ref_cis_por_confirmar: true
     semana: 4
 
   - control_id: CTL-ETQ-01

@@ -121,15 +121,15 @@ Usamos el **CIS Google Cloud Platform Foundation Benchmark v5.0.0**. Cada contro
 | CTL-RED-06 | Entrada desde internet a todos los puertos | Propio | Crítica | Sí |
 | CTL-RED-03 | Existe la red `default` | 3.1 | Media | No |
 | CTL-RED-05 | Subred sin registros de flujo (VPC Flow Logs) | 3.10 | Media | No |
-| CTL-IAM-01 | Llave de cuenta de servicio administrada por el usuario | 1.4 * | Alta | Sí |
-| CTL-IAM-02 | Cuenta de servicio con rol Owner, Editor o administrador | 1.5 * | Alta | Sí |
-| CTL-LOG-01 | Registros de auditoría de acceso a datos sin configurar | 2.1 * | Media | No |
-| CTL-STO-01 | Bucket con acceso público | 5.1 * | Crítica | Sí |
+| CTL-IAM-01 | Llave de cuenta de servicio administrada por el usuario | 1.5 | Alta | Sí |
+| CTL-IAM-02 | Cuenta de servicio con rol Owner, Editor o administrador | 1.6 | Alta | Sí |
+| CTL-LOG-01 | Registros de auditoría de acceso a datos sin configurar | 2.1 | Media | No |
+| CTL-STO-01 | Bucket con acceso público | 5.1 | Crítica | Sí |
 | CTL-ETQ-01 | Recurso sin etiquetas de dueño, ambiente, clasificación de datos, centro de costos y marco | Propio | Baja | No |
 | CTL-GOB-01 | Recurso creado o cambiado fuera de Terraform (drift) | Propio | Alta | Alerta |
 | CTL-GOB-02 | Recurso fuera de un módulo aprobado | Propio | Media | No |
 
-\* Número tomado de versiones anteriores del benchmark; falta confirmarlo contra la v5.0.0.
+En la v5.0.0, la recomendación 1.4 es la llave de seguridad de las cuentas de administrador. La llave de cuenta de servicio administrada por el usuario es la 1.5, y el rol de administrador en una cuenta de servicio es la 1.6.
 
 Además corre **Checkov**, una herramienta de código abierto que trae los chequeos CIS de GCP ya hechos y revisa todo el código de Terraform.
 
@@ -244,7 +244,7 @@ Las imágenes de los servicios (no se han construido), el `terraform apply` cont
 | Parte de la tarea | Lo que podemos aportar desde el reto |
 |---|---|
 | Evaluación de controles actuales | El método que ya usamos: un catálogo con control, severidad, recurso y referencia; cada control con una prueba que pasa y una que falla. Y la sección 6 como ejemplo de evaluación honesta: controles que existían en papel y no protegían |
-| Mejoras basadas en CIS Controls y benchmarks | La tabla de la sección 4: cómo una recomendación del benchmark se vuelve una regla que bloquea. Ejemplos directos contra ransomware: no exponer RDP ni SSH a internet (3.7 y 3.6), no dejar almacenamiento público (5.1), no usar llaves de larga vida (1.4), no dar roles de administrador a cuentas de servicio (1.5) |
+| Mejoras basadas en CIS Controls y benchmarks | La tabla de la sección 4: cómo una recomendación del benchmark se vuelve una regla que bloquea. Ejemplos directos contra ransomware: no exponer RDP ni SSH a internet (3.7 y 3.6), no dejar almacenamiento público (5.1), no usar llaves de larga vida (1.5), no dar roles de administrador a cuentas de servicio (1.6) |
 | Alternativas de cifrado | Lo que usamos y lo que nos falta (sección 8.4) |
 | Respuesta a incidentes | La parte de detección: aviso en minutos con quién, qué y cuándo; evidencia encadenada como registro forense; el principio de que el control siga funcionando si una pieza se cae (sección 8.5) |
 | Plan de recuperación | Infraestructura como código (se reconstruye desde el repositorio), estado con versiones y almacenamiento con retención que no deja borrar ni sobrescribir (sección 8.5) |

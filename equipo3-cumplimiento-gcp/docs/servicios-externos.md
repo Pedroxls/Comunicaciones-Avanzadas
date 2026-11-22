@@ -229,29 +229,28 @@ En `terraform.tfvars`: `slack_habilitado = true` (y `slack_canal` si se usó el 
 
 ## 7. Vertex AI (Gemini)
 
-No hay cuenta que crear: el bootstrap enciende la API y da el permiso al agente. Lo que falta es comprobar que el proyecto tiene cuota y que el modelo existe (riesgo R-07).
+No hay cuenta que crear: el bootstrap enciende la API y da el permiso al agente. No hace falta una API key. Lo que falta es comprobar que Gemini responde (riesgo R-07). `gemini-3.8-flash` no está en `us-central1`. El default de `vertex_location` es `us`. Si `us` no responde, repetir con `global`.
 
 ```bash
 cd equipo3-cumplimiento-gcp
-python3.12 -m venv .venv && . .venv/bin/activate
-python -m pip install -r agent/requirements.txt
+python3 -m pip install -r agent/requirements.txt
 cd agent
 USE_VERTEX=1 GOOGLE_GENAI_USE_VERTEXAI=TRUE \
-  GOOGLE_CLOUD_PROJECT=eq3-cumplimiento-dev-<algo> GOOGLE_CLOUD_LOCATION=us-central1 \
-  PYTHONPATH=..:. python -m cumplimiento.evaluar
+  GOOGLE_CLOUD_PROJECT=eq3-cumplimiento-dev-cc01 GOOGLE_CLOUD_LOCATION=us \
+  PYTHONPATH=..:. python3 -m cumplimiento.evaluar
 ```
 
-Corre los 30 casos etiquetados contra Gemini.
+Corre los 30 casos etiquetados contra Gemini. Guardar la salida.
 
 | Lo que sale | Qué significa |
 |---|---|
-| `fuentes` trae `vertex: 30` y `proporcion_fallidos` es menor a 0.10 | Hay cuota y se cumple RNF-09 |
-| `fuentes` solo trae `plantilla` | Vertex no respondió. Revisar la cuota en la consola (Vertex AI → Cuotas) o el nombre del modelo |
+| `fuentes` trae `vertex: 30` y `proporcion_fallidos` es menor a 0.10 | Gemini respondió y se cumple el Gate 3 (RNF-09) |
+| `fuentes` solo trae `plantilla` | Vertex no respondió. Repetir con `GOOGLE_CLOUD_LOCATION=global`. Si sigue en plantilla, el nombre del modelo no está en esa ubicación |
 | `proporcion_fallidos` es 0.10 o más | El modelo responde, pero no cumple la meta: revisar los casos en `fallidos` |
 
-El modelo por defecto es `gemini-3.8-flash` (variable `gemini_model`). Google retira los modelos cada año; el anterior del repositorio (`gemini-2.0-flash`) ya no existe. Si el nombre no funciona, la lista vigente está en https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versions
+El modelo por defecto es `gemini-3.8-flash` (variable `gemini_model`). Google retira los modelos cada año; el anterior del repositorio (`gemini-2.0-flash`) ya no existe. La lista vigente está en https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/model-versions
 
-Si pasa: en `terraform.tfvars`, `usar_vertex = true`, y `terraform apply`. Si no hay cuota, el plan B del diseño ya está funcionando: el agente responde con la plantilla.
+Si pasa: en el `terraform.tfvars` local, `usar_vertex = true` y `vertex_location = "us"`, y `terraform apply`. El repositorio deja `usar_vertex` en `false`. Si Vertex no responde, el plan B ya está funcionando: el agente responde con la plantilla. Después, en BigQuery, `cumplimiento.decision_agente` tiene que tener filas con `fuente = 'vertex'`.
 
 ## 8. Looker Studio
 
@@ -283,11 +282,16 @@ Sin la llave el PR no muestra el costo estimado; nada más cambia.
 
 ## 10. Benchmark CIS de Google Cloud
 
-El catálogo tiene cuatro referencias marcadas `ref_cis_por_confirmar`: CTL-IAM-01 (1.4), CTL-IAM-02 (1.5), CTL-LOG-01 (2.1) y CTL-STO-01 (5.1).
+Las cuatro referencias que estaban por confirmar ya se contrastaron con el texto publicado de la v5.0.0:
 
-1. https://www.cisecurity.org/benchmark/google_cloud_computing_platform → descargar el PDF de la versión 5.0.0. Es gratis; pide un correo.
-2. Confirmar las cuatro referencias. Conviene revisar también CTL-RED-05: en versiones anteriores del benchmark los VPC Flow Logs eran la recomendación 3.8, y el catálogo dice 3.10.
-3. Corregir `policies/catalog/controls.yaml` y `mappings.yaml`, quitar las marcas `ref_cis_por_confirmar` y abrir un PR con rama `policy/...` para que lo apruebe Seguridad.
+| Control | Era | Quedó | Recomendación |
+|---|---|---|---|
+| CTL-IAM-01 | 1.4 | 1.5 | Solo llaves de cuenta de servicio administradas por GCP |
+| CTL-IAM-02 | 1.5 | 1.6 | La cuenta de servicio no tiene privilegios de administrador |
+| CTL-LOG-01 | 2.1 | 2.1 | Cloud Audit Logs, incluidos los de acceso a datos |
+| CTL-STO-01 | 5.1 | 5.1 | El bucket no es anónimo ni público |
+
+En la v5.0.0, 1.4 es la llave de seguridad de las cuentas de administrador. CTL-RED-05 sigue en 3.10: en esa versión, 3.8 es VPC Service Controls y 3.10 son los VPC Flow Logs. El PDF oficial sigue en https://www.cisecurity.org/benchmark/google_cloud_computing_platform.
 
 ## 11. Protección de main
 

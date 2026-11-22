@@ -19,5 +19,7 @@ github_repository = "Pedroxls/Comunicaciones-Avanzadas"
 # lock_evidence_retention queda en false.
 
 # Encender cuando exista lo que cada uno necesita (docs/runbooks/puesta-en-marcha.md).
-# usar_vertex      = true   # después de confirmar la cuota de Vertex AI (R-07)
+# vertex_location sale en "us". No poner us-central1: gemini-3.8-flash no está ahí.
+# vertex_location  = "us"
+# usar_vertex      = true   # solo después de los 30 casos con fuentes.vertex = 30 (R-07)
 # slack_habilitado = true   # después de cargar el token en el secreto slack-bot-token
