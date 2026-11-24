@@ -4,7 +4,7 @@ Lo que hay que hacer fuera del código para que el MVP corra en GCP, en orden. C
 
 Este es el orden corto. Cómo se crea cada cuenta (Google Cloud, Slack, Looker Studio, Infracost) está paso a paso en [servicios-externos.md](../servicios-externos.md).
 
-El bootstrap, las imágenes y la red de dev ya están aplicados. El estado del bootstrap vive en el bucket. `main` exige pull request, una aprobación y los cuatro checks. El 22 de noviembre Gemini en `us` y Slack ya funcionan. Looker sigue pendiente.
+El bootstrap, las imágenes y la red de dev ya están aplicados. El estado del bootstrap vive en el bucket. `main` exige pull request, una aprobación y los cuatro checks. El 22 de noviembre Gemini, Slack, Looker Studio y los accesos de solo lectura ya están en uso.
 
 ## Antes de empezar
 
@@ -135,9 +135,9 @@ Si pasa, en el `terraform.tfvars` local del bootstrap (no se sube) poner `usar_v
 
 ## 8. Looker Studio (HU-08)
 
-En lookerstudio.google.com, con la cuenta de Cumplimiento, crear un reporte con el conector de BigQuery sobre el dataset `cumplimiento`:
+El reporte ya está armado, con una página por vista del dataset `cumplimiento`:
 
-| Vista | Para qué página |
+| Vista | Página |
 |---|---|
 | `resumen_por_marco` | Inicio: controles que cumplen y porcentaje por marco |
 | `reporte_por_marco` | Reporte por marco: una fila por control con su estado y su última evidencia |
@@ -145,7 +145,18 @@ En lookerstudio.google.com, con la cuenta de Cumplimiento, crear un reporte con 
 | `hallazgos_historico` | Todo lo encontrado; aquí va el filtro por periodo |
 | `evaluaciones` | Evaluaciones de PR, PR bloqueados y tiempo de validación |
 
-El acceso lo dan las listas `miembros_cumplimiento` y `miembros_auditoria` de `terraform.tfvars`: quien no esté ahí no ve datos aunque tenga la liga. El CSV y el PDF se exportan desde Looker.
+En cada fuente de datos, **Credenciales de los datos** queda en **Credenciales del lector**. Se comparte el informe como lector con las personas de Cumplimiento y Auditoría. No se publica con una liga abierta: quien no esté en las listas abre el informe y las tarjetas dicen que no tiene permiso sobre los datos. Eso es CP-20, demostrado el 22 de noviembre. El PDF sale de **Archivo** → **Descargar** → PDF. El CSV, del menú de cada tabla.
+
+Looker guarda caché. Antes de presentar, en el informe: **Recurso** → **Administrar las fuentes de datos agregadas** → actualizar los datos, o el botón de actualizar del informe.
+
+Dar o quitar acceso no se hace en Looker. Va en el `terraform.tfvars` local de quien aplica el bootstrap, y no se sube:
+
+```hcl
+miembros_cumplimiento = ["user:correo@dominio"]
+miembros_auditoria    = ["user:otro@dominio"]
+```
+
+Cumplimiento y Auditoría leen el dataset y pueden correr consultas. Auditoría además lee el bucket de evidencia. Quitar un correo de la lista y volver a aplicar le quita ese acceso. Compartir o dejar de compartir el informe en Looker es aparte, y también como lector.
 
 ## 9. Protección de main
 
