@@ -13,8 +13,7 @@ import threading
 from cumplimiento.herramientas import INSTRUCCION, herramientas_de_lectura
 
 MODELO_POR_DEFECTO = "gemini-3.8-flash"
-# Una explicación con herramienta son dos llamadas al modelo. En 25 s la segunda
-# no alcanzaba y la cortábamos. 60 s deja que termine; si vence, responde la plantilla.
+# Una explicación puede hacer dos llamadas al modelo. 60 s cubre las dos.
 TIEMPO_MAXIMO_SEG = 60
 
 
@@ -31,11 +30,7 @@ def construir(catalogo: dict | None = None, modelo=None):
 
 
 class ExplicadorADK:
-    """Llama al agente con los datos de un hallazgo y devuelve (texto, herramientas usadas).
-
-    Un solo bucle para todas las llamadas. Cerrar el bucle al terminar cada una
-    cortaba al cliente de Google (Event loop is closed) y obligaba a abrir otra conexión.
-    """
+    """Llama al agente y devuelve el texto y las herramientas que usó."""
 
     def __init__(self, catalogo: dict | None = None, modelo=None):
         self._agente = construir(catalogo, modelo)
