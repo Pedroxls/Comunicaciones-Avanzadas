@@ -104,8 +104,7 @@ resource "google_cloud_run_v2_service" "agente" {
   }
 
   lifecycle {
-    # scaling del servicio (manual_instance_count): el plan lo muestra de 0 a null.
-    # No ignorar template.scaling: ahí vive max_instance_count.
+    # scaling del servicio. template.scaling queda vigilado: ahí está max_instance_count.
     ignore_changes = [template[0].containers[0].image, scaling, client, client_version]
   }
 
@@ -144,8 +143,6 @@ resource "google_cloud_run_v2_service" "evidencia" {
   }
 
   lifecycle {
-    # scaling del servicio (manual_instance_count): el plan lo muestra de 0 a null.
-    # No ignorar template.scaling: ahí vive max_instance_count.
     ignore_changes = [template[0].containers[0].image, scaling, client, client_version]
   }
 
@@ -183,8 +180,6 @@ resource "google_cloud_run_v2_service" "drift" {
   }
 
   lifecycle {
-    # scaling del servicio (manual_instance_count): el plan lo muestra de 0 a null.
-    # No ignorar template.scaling: ahí vive max_instance_count.
     ignore_changes = [template[0].containers[0].image, scaling, client, client_version]
   }
 
@@ -222,8 +217,6 @@ resource "google_cloud_run_v2_service" "freno" {
   }
 
   lifecycle {
-    # scaling del servicio (manual_instance_count): el plan lo muestra de 0 a null.
-    # No ignorar template.scaling: ahí vive max_instance_count.
     ignore_changes = [template[0].containers[0].image, scaling, client, client_version]
   }
 

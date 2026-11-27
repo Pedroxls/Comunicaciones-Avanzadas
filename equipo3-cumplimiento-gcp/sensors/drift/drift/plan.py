@@ -3,11 +3,6 @@
 `terraform plan -refresh-only` deja lo que cambió fuera de Terraform en
 `resource_drift`, con la misma forma que `resource_changes`. Las políticas
 leen `resource_changes`, así que aquí solo se cambia de lugar.
-
-Después de un apply, el refresh trae campos que el proveedor calcula o rellena
-con su valor por defecto y que el estado todavía no guardó. Como el plan
-horario no escribe el estado, ese aviso se repetía cada hora. Esos campos no
-cuentan como un cambio hecho a mano.
 """
 
 # Nombres que el proveedor escribe solo. No son configuración del equipo.
