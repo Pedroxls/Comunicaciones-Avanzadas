@@ -220,7 +220,7 @@ jobs:
             echo "::notice::Falta INFRACOST_API_KEY. Se omite el costo del PR."
             exit 0
           fi
-          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | INFRACOST_VERSION=v0.10.51 sh
           infracost breakdown --path infra/environments/dev/plan.json --format table --out-file costo.md
 
       # El agente solo aporta la explicación. Si este paso o el agente fallan,
