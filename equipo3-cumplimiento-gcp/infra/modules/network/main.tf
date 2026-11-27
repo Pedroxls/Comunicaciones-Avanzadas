@@ -49,6 +49,7 @@ resource "google_compute_firewall" "interna_https" {
   network       = google_compute_network.vpc.name
   direction     = "INGRESS"
   source_ranges = [var.subnet_cidr]
+  description   = "HTTPS solo desde el CIDR de la subred"
 
   allow {
     protocol = "tcp"
